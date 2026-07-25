@@ -1,7 +1,7 @@
 import os
 import time
 from collections.abc import AsyncGenerator
-from unittest.mock import AsyncMock, patch
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import jwt
 
@@ -15,6 +15,7 @@ from starlette.testclient import TestClient
 
 from app.config.settings import Settings
 from app.main import create_app
+from app.supabase.context import ContextBundle
 
 
 def build_test_token(
@@ -77,5 +78,19 @@ def sync_client(app):
 @pytest.fixture
 def mock_gemini():
     patcher = patch("app.api.routes.call_gemini", new_callable=AsyncMock)
+    yield patcher.start()
+    patcher.stop()
+
+
+@pytest.fixture
+def mock_supabase_context():
+    patcher = patch("app.api.routes.build_plant_context", new_callable=AsyncMock)
+    yield patcher.start()
+    patcher.stop()
+
+
+@pytest.fixture
+def mock_supabase_client():
+    patcher = patch("app.api.routes.build_user_client", new_callable=AsyncMock)
     yield patcher.start()
     patcher.stop()

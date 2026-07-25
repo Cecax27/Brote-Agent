@@ -1,0 +1,183 @@
+from unittest.mock import AsyncMock
+
+import pytest
+from httpx import AsyncClient
+
+from app.agent.loop import UpstreamError
+from app.supabase.context import ContextBundle, DeepPlantContext, PlantSummary
+
+
+@pytest.mark.asyncio
+async def test_chat_passes_context_to_gemini(
+    client: AsyncClient,
+    mock_gemini: AsyncMock,
+    mock_supabase_client: AsyncMock,
+    mock_supabase_context: AsyncMock,
+    auth_headers: dict,
+) -> None:
+    mock_gemini.return_value = "Tu Monstera está bien."
+    mock_supabase_context.return_value = ContextBundle(light=[])
+
+    await client.post(
+        "/chat",
+        json={"message": "¿Cómo está mi planta?"},
+        headers=auth_headers,
+    )
+
+    call_args = mock_gemini.call_args
+    assert call_args is not None
+    context_value = call_args.kwargs.get("context")
+    assert context_value is not None
+
+
+@pytest.mark.asyncio
+async def test_chat_uses_deep_mode_when_plant_id_set(
+    client: AsyncClient,
+    mock_gemini: AsyncMock,
+    mock_supabase_client: AsyncMock,
+    mock_supabase_context: AsyncMock,
+    auth_headers: dict,
+) -> None:
+    mock_gemini.return_value = "Tu planta está creciendo muy bien."
+    mock_supabase_context.return_value = ContextBundle(
+        deep=DeepPlantContext(
+            plant=PlantSummary(
+                id="plant-123",
+                nickname="Monstera",
+                species="Monstera deliciosa",
+                last_watered="2025-01-15",
+                next_watering="2025-01-22",
+            )
+        )
+    )
+
+    await client.post(
+        "/chat",
+        json={"message": "¿Cómo está mi Monstera?", "plant_id": "plant-123"},
+        headers=auth_headers,
+    )
+
+    mock_supabase_context.assert_called_once()
+    call_kwargs = mock_supabase_context.call_args.kwargs
+    assert call_kwargs["plant_id"] == "plant-123"
+
+
+@pytest.mark.asyncio
+async def test_chat_uses_light_mode_when_no_plant_id(
+    client: AsyncClient,
+    mock_gemini: AsyncMock,
+    mock_supabase_client: AsyncMock,
+    mock_supabase_context: AsyncMock,
+    auth_headers: dict,
+) -> None:
+    mock_gemini.return_value = "Tienes 3 plantas que necesitan atención."
+    mock_supabase_context.return_value = ContextBundle(light=[])
+
+    await client.post(
+        "/chat",
+        json={"message": "¿Qué necesita atención hoy?"},
+        headers=auth_headers,
+    )
+
+    mock_supabase_context.assert_called_once()
+    call_kwargs = mock_supabase_context.call_args.kwargs
+    assert call_kwargs["plant_id"] is None
+
+
+@pytest.mark.asyncio
+async def test_chat_supabase_failure_returns_502(
+    client: AsyncClient,
+    mock_gemini: AsyncMock,
+    mock_supabase_client: AsyncMock,
+    mock_supabase_context: AsyncMock,
+    auth_headers: dict,
+) -> None:
+    mock_supabase_context.side_effect = UpstreamError(
+        "El servicio de datos no respondió. Inténtalo de nuevo en un momento."
+    )
+
+    response = await client.post(
+        "/chat",
+        json={"message": "Hola"},
+        headers=auth_headers,
+    )
+
+    assert response.status_code == 502
+    data = response.json()
+    assert data["error"]["code"] == "UPSTREAM_ERROR"
+    mock_gemini.assert_not_called()
+
+
+@pytest.mark.asyncio
+async def test_chat_context_sets_data_minimization_bounds(
+    client: AsyncClient,
+    mock_gemini: AsyncMock,
+    mock_supabase_client: AsyncMock,
+    mock_supabase_context: AsyncMock,
+    auth_headers: dict,
+) -> None:
+    mock_gemini.return_value = "Todo bien."
+    mock_supabase_context.return_value = ContextBundle(light=[])
+
+    await client.post(
+        "/chat",
+        json={"message": "test"},
+        headers=auth_headers,
+    )
+
+    call_kwargs = mock_supabase_context.call_args.kwargs
+    assert call_kwargs["max_plants"] <= 20
+    assert call_kwargs["max_entries"] <= 10
+
+
+@pytest.mark.asyncio
+async def test_chat_off_topic_refusal_still_works(
+    client: AsyncClient,
+    mock_gemini: AsyncMock,
+    mock_supabase_client: AsyncMock,
+    mock_supabase_context: AsyncMock,
+    auth_headers: dict,
+) -> None:
+    mock_gemini.return_value = (
+        "Me encantaría poder ayudarte con eso, pero yo soy Flora, "
+        "solo sé de plantas. ¿Tienes alguna planta de la que quieras hablarme?"
+    )
+    mock_supabase_context.return_value = ContextBundle(light=[])
+
+    response = await client.post(
+        "/chat",
+        json={"message": "¿Cuál es la capital de Francia?"},
+        headers=auth_headers,
+    )
+
+    assert response.status_code == 200
+    data = response.json()
+    assert "planta" in data["reply"].lower() or "plantas" in data["reply"].lower()
+
+
+@pytest.mark.asyncio
+async def test_chat_reply_still_in_spanish(
+    client: AsyncClient,
+    mock_gemini: AsyncMock,
+    mock_supabase_client: AsyncMock,
+    mock_supabase_context: AsyncMock,
+    auth_headers: dict,
+) -> None:
+    mock_gemini.return_value = "¡Claro! Las suculentas necesitan mucha luz."
+    mock_supabase_context.return_value = ContextBundle(light=[])
+
+    response = await client.post(
+        "/chat",
+        json={"message": "How do I care for a succulent?"},
+        headers=auth_headers,
+    )
+
+    assert response.status_code == 200
+    data = response.json()
+    assert any(
+        "\u00e1" in data["reply"].lower()
+        or "\u00e9" in data["reply"].lower()
+        or "\u00f3" in data["reply"].lower()
+        or "\u00fa" in data["reply"].lower()
+        or "\u00f1" in data["reply"].lower()
+    )

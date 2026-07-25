@@ -2,12 +2,14 @@ from __future__ import annotations
 
 import time
 from dataclasses import dataclass, field
-
-from supabase._async.client import AsyncClient
+from typing import TYPE_CHECKING
 
 from app.agent.loop import UpstreamError
 from app.logging import get_logger
 from app.supabase import schema as s
+
+if TYPE_CHECKING:
+    from supabase._async.client import AsyncClient
 
 logger = get_logger(__name__)
 
