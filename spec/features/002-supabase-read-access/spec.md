@@ -1,6 +1,6 @@
 # 002 - Supabase Read Access
 
-**Status:** Planning
+**Status:** In Progress
 
 ## What makes
 
