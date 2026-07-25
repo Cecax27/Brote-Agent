@@ -32,13 +32,13 @@ Each feature below is scaffolded as `spec/features/NNN-name/` with `spec.md`, `p
 
 ### 001-conversation-foundation
 What: A REST endpoint the mobile app calls to have a plant-care conversation with the AI. Stateless, no history stored on the agent side.
-- [ ] Define the chat API contract — request/response shape, streaming vs. single-shot, error format
-- [ ] Gemini client setup — provider key from secret manager, model selection, temperature tuning for a calm friendly tone
-- [ ] System prompt engineering — Flora personality (relaxed, cheerful, non-judgmental), always ends with a concrete next step
-- [ ] Plant-care scope guardrail — refuse off-topic requests gracefully to avoid wasting credits
-- [ ] Spanish-only responses — all AI output in Spanish, matching the app
-- [ ] Request validation and structured error responses
-- [ ] Cloud Run deployment config — container, health check, scaling
+- [x] Define the chat API contract — request/response shape, streaming vs. single-shot, error format
+- [x] Gemini client setup — provider key from secret manager, model selection, temperature tuning for a calm friendly tone
+- [x] System prompt engineering — Flora personality (relaxed, cheerful, non-judgmental), always ends with a concrete next step
+- [x] Plant-care scope guardrail — refuse off-topic requests gracefully to avoid wasting credits
+- [x] Spanish-only responses — all AI output in Spanish, matching the app
+- [x] Request validation and structured error responses
+- [x] Cloud Run deployment config — container, health check, scaling
 
 ### 002-supabase-read-access
 What: The AI can read the user's plants and their history. Security and privacy are mandatory — a user can only ever access their own data.
