@@ -1,0 +1,103 @@
+# Roadmap
+
+## V0.1 Foundation — "The First Sprout"
+
+The bare minimum to have a running agent online: a Python service exposing a REST API, a basic agent loop, and an automated deploy to Google Cloud Run. No Supabase, no tools, no persistence — just a health-checked endpoint that can hold a plant-care conversation. Everything in V1.0 builds on top of this.
+
+### 000-agent-foundation
+What: The skeleton of the whole project — project layout, dependencies, a minimal REST API, a basic agent call to OpenAI, and an automated Cloud Run deploy.
+- [ ] Initialize `uv` project — `pyproject.toml`, `uv.lock`, Python version pin
+- [ ] Project layout — `app/` package with `main.py` entrypoint, `agent/` module, `config/` for settings, `tests/`
+- [ ] Config and env loading — `pydantic-settings` reading env vars (OpenAI key, port, model name); no secrets in code
+- [ ] Minimal web framework — pick one, mount a `/health` endpoint that returns 200 (used by Cloud Run)
+- [ ] Basic REST API contract documented — routes, request/response JSON shapes, error structure
+- [ ] Minimal agent loop — a single `POST` endpoint (e.g. `/chat`) that receives a message, calls OpenAI with a bare system prompt, returns the reply
+- [ ] Placeholder system prompt — just enough persona (calm, Spanish, plant-care focused) to test end-to-end
+- [ ] Structured logging — JSON logs to stdout (Cloud Run captures stdout)
+- [ ] Error handling — structured JSON error responses, never leak stack traces to the client
+- [ ] Local dev workflow documented — `uv run`, local run command, how to point at a test OpenAI key
+- [ ] `Dockerfile` — multi-stage, lean runtime image, listen on `$PORT`
+- [ ] Cloud Run deploy config — `cloudbuild.yaml` or `gcloud run deploy` invocation, region, memory, concurrency, min instances set to 0
+- [ ] Secret management — load OpenAI key from Secret Manager (or Secret Manager env var), never baked into the image
+- [ ] CI pipeline — on push to `main`, build image and deploy to Cloud Run
+- [ ] Smoke test against the live endpoint after deploy (hit `/health`)
+- [ ] Basic test setup — `pytest` runner, one test hitting the `/chat` endpoint with a mocked OpenAI client
+- [ ] Lint and format via `ruff` — `ruff check` and `ruff format` wired into CI
+
+## V1.0 — "Flora Awakens"
+
+The first complete version of the Brote-Agent backend: a conversational plant-care companion that reads and writes the user's Supabase data, understands photos, searches the web, and keeps the experience lively while staying focused on plant care.
+
+Each feature below is scaffolded as `spec/features/NNN-name/` with `spec.md`, `plan.md`, and `tasks.md` before any code is touched. V0.1 is the only exception — it establishes the project itself.
+
+### 001-conversation-foundation
+What: A REST endpoint the mobile app calls to have a plant-care conversation with the AI. Stateless, no history stored on the agent side.
+- [ ] Define the chat API contract — request/response shape, streaming vs. single-shot, error format
+- [ ] OpenAI client setup — provider key from secret manager, model selection, temperature tuning for a calm friendly tone
+- [ ] System prompt engineering — Brote personality (relaxed, cheerful, non-judgmental), always ends with a concrete next step
+- [ ] Plant-care scope guardrail — refuse off-topic requests gracefully to avoid wasting credits
+- [ ] Spanish-only responses — all AI output in Spanish, matching the app
+- [ ] Request validation and structured error responses
+- [ ] Cloud Run deployment config — container, health check, scaling
+
+### 002-supabase-read-access
+What: The AI can read the user's plants and their history. Security and privacy are mandatory — a user can only ever access their own data.
+- [ ] Decide the auth hand-off — how the app passes the Supabase session to the agent (access token in header)
+- [ ] Verify the user's identity — validate the Supabase JWT (JWT secret) or call Supabase auth endpoint
+- [ ] Scoped Supabase client — query as the authenticated user so Row Level Security applies, or use service role with strict user_id filtering
+- [ ] Context builder — gather the relevant plant(s), journal entries, watering schedule, light history, photo references to inject into the AI context window
+- [ ] Data minimization — only fetch what the specific question actually needs
+- [ ] Never expose other users' data — verify scoping on every read path
+
+### 003-supabase-write-actions
+What: The AI can write data back to Supabase on the user's behalf when they confirm an action.
+- [ ] Define the writable surface — which tables/fields the AI is allowed to write (e.g., watering schedules, journal entries)
+- [ ] Proposed-action flow — AI suggests an action, returns a structured action payload, app asks the user to confirm
+- [ ] Confirm-and-execute endpoint — agent writes to Supabase only after explicit user confirmation
+- [ ] Example flow: watering schedule — user asks watering frequency, AI answers and offers to create the schedule, user confirms, AI writes it
+- [ ] Write under the user's identity — writes respect RLS / user_id ownership
+- [ ] Save-a-tip flow — let the user save a useful snippet from a conversation into a plant's journal before the conversation disappears
+- [ ] Audit logging — record what the AI wrote on whose behalf
+
+### 004-image-analysis
+What: The user can send photos and the AI analyzes them — plant health, pest/disease symptoms, species identification.
+- [ ] Image upload contract — how the app sends images (direct upload to Supabase Storage + URL, or multipart to the agent)
+- [ ] Vision model integration — send image + prompt to OpenAI vision capabilities
+- [ ] Plant health diagnosis — analyze leaves for yellowing, spots, pests, dehydration, etc., and recommend care
+- [ ] Plant identification — suggest species from a photo with a confidence indicator
+- [ ] Calibration guidance — ask the user for context (light, recent watering) before diagnosing so the AI avoids inventing answers
+- [ ] Photo size and cost limits — resize/optimize images before sending to the vision model to control cost and latency
+
+### 005-dynamic-states
+What: Replace the static "answering..." state with lively intermediate status messages while the AI works. Makes the app feel alive and sets expectations about what the agent is doing.
+- [ ] Stream intermediate status events from the agent alongside the final answer (SSE or chunked response)
+- [ ] Status vocabulary — context-aware messages like "Revisando mi wiki de plantas…", "Buscando en tu jardín…", "Analizando la foto…", "Buscando en internet…"
+- [ ] Map statuses to real agent steps — reading Supabase, running web search, analyzing image, generating response
+- [ ] Optional humor — lighthearted messages that stay on-brand without turning help into a joke
+- [ ] Keep statuses honest — only emit a status when that step is actually happening
+
+### 006-web-search
+What: The agent can search the internet to answer with current, sourced information and hand the user useful links.
+- [ ] Integrate a web search tool the AI can call during a conversation
+- [ ] Source-grounded responses — when the AI uses search results, reference them and surface links (articles, videos, products)
+- [ ] Decide when to search — let the model decide, or trigger on recognized intents (care guides, pest identification, product recommendations)
+- [ ] Rate limiting and cost controls — avoid runaway search loops
+- [ ] Trustworthiness — prefer reputable sources, never invent links, say so when info is missing
+
+## Non-Goals (V1.0)
+
+Explicitly out of scope for the first version. Keep these out of the codebase unless revisited.
+
+- **Conversation persistence.** Do not store chat history. The agent is per-request. Useful outputs are saved by the user into Supabase (a tip, a journal entry, a watering schedule) — the conversation itself disappears. This is why the write-back feature (#003) exists.
+- **Image creation.** No text-to-image generation. Not now, not later.
+- **Off-topic conversation.** The agent specializes in plant care only. Guard against burning credits on unrelated questions; decline gracefully and steer back to plants.
+
+## Backlog / Ideas
+
+- Voice input / spoken conversations
+- Proactive nudges — agent-initiated reminders based on plant state
+- Multi-language support beyond Spanish
+- Specialized diagnosis models (beyond general vision)
+- Cost dashboard for the user's AI usage
+
+> Each new feature is created as `spec/features/NNN-name/` with `spec.md`, `plan.md`, and `tasks.md` before any code is touched.
