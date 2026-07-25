@@ -28,5 +28,5 @@ images:
 
 substitutions:
   _SERVICE_NAME: brote-agent
-  _REGION: europe-west1
+  _REGION: us-central1
   _REPOSITORY: brote-repo

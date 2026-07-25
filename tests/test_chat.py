@@ -4,6 +4,8 @@ import pytest
 from httpx import AsyncClient
 from starlette.testclient import TestClient
 
+from app.agent.loop import UpstreamError
+
 
 @pytest.mark.asyncio
 async def test_health_returns_ok(client: AsyncClient) -> None:
@@ -42,8 +44,22 @@ async def test_chat_missing_message_returns_422(client: AsyncClient) -> None:
     assert "error" in data
 
 
-def test_chat_gemini_error_returns_500(sync_client: TestClient, mock_gemini: AsyncMock) -> None:
-    mock_gemini.side_effect = Exception("Gemini API error")
+def test_chat_upstream_error_returns_502(sync_client: TestClient, mock_gemini: AsyncMock) -> None:
+    mock_gemini.side_effect = UpstreamError(
+        "El servicio de IA no respondió. Inténtalo de nuevo en un momento."
+    )
+
+    response = sync_client.post("/chat", json={"message": "test"})
+
+    assert response.status_code == 502
+    data = response.json()
+    assert "error" in data
+    assert data["error"]["code"] == "UPSTREAM_ERROR"
+    assert "El servicio" in data["error"]["message"]
+
+
+def test_chat_unexpected_error_returns_500(sync_client: TestClient, mock_gemini: AsyncMock) -> None:
+    mock_gemini.side_effect = Exception("Unexpected internal failure")
 
     response = sync_client.post("/chat", json={"message": "test"})
 
@@ -51,4 +67,3 @@ def test_chat_gemini_error_returns_500(sync_client: TestClient, mock_gemini: Asy
     data = response.json()
     assert "error" in data
     assert data["error"]["code"] == "INTERNAL_ERROR"
-    assert "OpenAI" not in data["error"]["message"]

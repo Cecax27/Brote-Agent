@@ -4,6 +4,8 @@
 
 Brote-Agent is the AI backend powering the Brote plant-care mobile app. It is a Python service deployed on Google Cloud Run that exposes a REST API consumed by the React Native client.
 
+The agent character name is Flora.
+
 The agent's job: make every plant-care interaction smarter through context-aware AI. It knows each plant's full history — photos, watering, fertilizations, repottings, past issues, location — and uses that context to give personalized, calm, expert-level guidance.
 
 ## Core Capabilities

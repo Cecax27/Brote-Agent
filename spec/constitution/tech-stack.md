@@ -25,16 +25,16 @@ brote-agent/
 │   │   └── errors.py        # Exception handlers -> JSON error envelope
 │   ├── agent/
 │   │   ├── __init__.py
-│   │   ├── loop.py          # call_openai(message) -> reply
-│   │   └── prompts.py       # Placeholder Spanish plant-care system prompt
+│   │   ├── loop.py          # call_gemini(message) -> reply
+│   │   └── prompts.py       # Flora persona system prompt
 │   ├── config/
 │   │   ├── __init__.py
-│   │   └── settings.py      # pydantic-settings: OPENAI_API_KEY, PORT, OPENAI_MODEL...
+│   │   └── settings.py      # pydantic-settings: GEMINI_API_KEY, GEMINI_MODEL...
 │   └── logging.py           # structlog JSON to stdout
 ├── tests/
 │   ├── __init__.py
-│   ├── conftest.py          # Client fixture, OpenAI mock fixture
-│   └── test_chat.py         # /chat with mocked OpenAI; /health smoke
+│   ├── conftest.py          # Client fixture, Gemini mock fixture
+│   └── test_chat.py         # /chat with mocked Gemini; /health smoke
 ├── docs/
 │   └── api-contract.md      # Routes, request/response JSON, error envelope
 ├── .dockerignore
@@ -90,11 +90,11 @@ brote-agent/
 - **Error handling:** Structured JSON error envelope `{"error": {"code": "...", "message": "..."}}`. Never leak stack traces.
 - **Logging:** `structlog` with JSON renderer to stdout. One log per request (method, path, status, duration_ms).
 - **Config:** `pydantic-settings` reading from env vars. `.env` in dev (gitignored). Secrets from Secret Manager in Cloud Run.
-- **Testing:** `pytest` with async support (`pytest-asyncio`). Mock external services (OpenAI).
+- **Testing:** `pytest` with async support (`pytest-asyncio`). Mock external services (Gemini).
 - **API:** FastAPI with async handlers. Validate request bodies with Pydantic models.
 - **Docker:** Multi-stage build. Runtime image listens on `$PORT`. `.dockerignore` excludes `.git`, `tests`, `.venv`, caches.
 - **CI:** GitHub Actions on push to `main`: lint, format check, tests, build, deploy, smoke test.
-- **Cloud Run:** `europe-west1`, min-instances=0, concurrency=80, memory=512Mi. OpenAI key from Secret Manager as `OPENAI_API_KEY` env var.
+- **Cloud Run:** `us-central1`, min-instances=0, concurrency=80, memory=512Mi. Gemini key from Secret Manager as `GEMINI_API_KEY` env var.
 - **Secrets:** Never in code, never in images, never in logs. `.env` in dev (gitignored).
 - **Language:** All AI responses in Spanish. Code and docs in English.
 

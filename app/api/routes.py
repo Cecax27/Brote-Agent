@@ -40,6 +40,8 @@ async def chat(body: ChatRequest, request: Request) -> ChatResponse:
         message=body.message,
         api_key=settings.gemini_api_key,
         model=settings.gemini_model,
+        temperature=settings.gemini_temperature,
+        max_output_tokens=settings.gemini_max_output_tokens,
     )
 
     elapsed_ms = int((time.monotonic() - start) * 1000)

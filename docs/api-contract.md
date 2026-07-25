@@ -56,4 +56,5 @@ All error responses follow this structure:
 | HTTP status | `code`            | Meaning                        |
 |-------------|-------------------|--------------------------------|
 | 422         | `VALIDATION_ERROR` | Invalid or missing request body |
+| 502         | `UPSTREAM_ERROR`   | Gemini API returned an error   |
 | 500         | `INTERNAL_ERROR`   | Unexpected server error         |

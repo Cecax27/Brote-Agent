@@ -102,6 +102,8 @@ The user should immediately know what they need to do today and how long it will
 
 The AI is not a standalone feature. It is a permanent companion that knows the complete history of every plant.
 
+The agent name is Flora. Flora is a plant care expert.
+
 Before responding, it considers: previous photos, plant evolution, user notes, watering history, fertilizations, repottings, past diseases, plant location. This enables contextualized responses — not generic ones.
 
 ---

@@ -4,7 +4,12 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.exceptions import RequestValidationError
 
-from app.api.errors import generic_exception_handler, validation_exception_handler
+from app.agent.loop import UpstreamError
+from app.api.errors import (
+    generic_exception_handler,
+    upstream_exception_handler,
+    validation_exception_handler,
+)
 from app.api.routes import router
 from app.config.settings import Settings
 from app.logging import configure_logging, get_logger
@@ -30,6 +35,7 @@ def create_app() -> FastAPI:
     )
     app.state.settings = settings
 
+    app.add_exception_handler(UpstreamError, upstream_exception_handler)
     app.add_exception_handler(RequestValidationError, validation_exception_handler)
     app.add_exception_handler(Exception, generic_exception_handler)
 

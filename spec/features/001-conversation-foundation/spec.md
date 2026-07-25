@@ -1,6 +1,6 @@
 # 001 - Conversation Foundation
 
-**Status:** Planning
+**Status:** In Progress — Phases 0–5 code-complete (manual smoke remaining)
 
 ## What makes
 
@@ -8,7 +8,7 @@ This feature turns the placeholder chat from V0.1 into Brote's real conversation
 
 Concretely it delivers:
 
-- A **production system prompt** that encodes the full Brote personality from `mission.md`: relaxed, cheerful, optimistic, close to nature; speaks like a plant-loving friend; loves sharing plant curiosities; a sense of humor that never turns help into a joke; never judges or guilt-trips (never makes the user feel bad for forgetting to water); celebrates every new leaf; always briefly explains the reasoning behind a recommendation; admits uncertainty clearly and never invents answers; always ends with a concrete, actionable next step; and replies only in Spanish.
+- A **production system prompt** that encodes the full Flora personality from `mission.md`: relaxed, cheerful, optimistic, close to nature; speaks like a plant-loving friend; loves sharing plant curiosities; a sense of humor that never turns help into a joke; never judges or guilt-trips (never makes the user feel bad for forgetting to water); celebrates every new leaf; always briefly explains the reasoning behind a recommendation; admits uncertainty clearly and never invents answers; always ends with a concrete, actionable next step; and replies only in Spanish.
 - A **plant-care scope guardrail**: the AI gracefully refuses off-topic requests in Spanish and steers the user back to plant care, handled within the single Gemini call (no separate model round-trip) so credits aren't wasted on a second classifier.
 - **Spanish-only enforcement** as a hard prompt-level requirement, verifiable in tests.
 - **Finalized Gemini generation config** as settings (temperature, max output tokens, safety), so the calm-friendly tone is a deliberate, tunable choice rather than a hardcoded constant.

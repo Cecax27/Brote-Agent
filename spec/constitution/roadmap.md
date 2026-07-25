@@ -5,23 +5,23 @@
 The bare minimum to have a running agent online: a Python service exposing a REST API, a basic agent loop, and an automated deploy to Google Cloud Run. No Supabase, no tools, no persistence — just a health-checked endpoint that can hold a plant-care conversation. Everything in V1.0 builds on top of this.
 
 ### 000-agent-foundation
-What: The skeleton of the whole project — project layout, dependencies, a minimal REST API, a basic agent call to OpenAI, and an automated Cloud Run deploy.
+What: The skeleton of the whole project — project layout, dependencies, a minimal REST API, a basic agent call to Gemini, and an automated Cloud Run deploy.
 - [x] Initialize `uv` project — `pyproject.toml`, `uv.lock`, Python version pin
 - [x] Project layout — `app/` package with `main.py` entrypoint, `agent/` module, `config/` for settings, `tests/`
-- [x] Config and env loading — `pydantic-settings` reading env vars (OpenAI key, port, model name); no secrets in code
+- [x] Config and env loading — `pydantic-settings` reading env vars (Gemini key, port, model name); no secrets in code
 - [x] Minimal web framework — FastAPI, mount a `/health` endpoint that returns 200 (used by Cloud Run)
 - [x] Basic REST API contract documented — routes, request/response JSON shapes, error structure
-- [x] Minimal agent loop — a single `POST /chat` endpoint that receives a message, calls OpenAI with a bare system prompt, returns the reply
+- [x] Minimal agent loop — a single `POST /chat` endpoint that receives a message, calls Gemini with a bare system prompt, returns the reply
 - [x] Placeholder system prompt — just enough persona (calm, Spanish, plant-care focused) to test end-to-end
 - [x] Structured logging — JSON logs to stdout (Cloud Run captures stdout)
 - [x] Error handling — structured JSON error responses, never leak stack traces to the client
-- [x] Local dev workflow documented — `uv run`, local run command, how to point at a test OpenAI key
+- [x] Local dev workflow documented — `uv run`, local run command, how to point at a test Gemini key
 - [x] `Dockerfile` — multi-stage, lean runtime image, listen on `$PORT`
 - [x] Cloud Run deploy config — `cloudbuild.yaml`, region, memory, concurrency, min instances set to 0
-- [x] Secret management — load OpenAI key from Secret Manager, never baked into the image
+- [x] Secret management — load Gemini key from Secret Manager, never baked into the image
 - [x] CI pipeline — GitHub Actions on push to `main`: lint, test, build, deploy, smoke test
 - [x] Smoke test against the live endpoint after deploy (hit `/health`)
-- [x] Basic test setup — `pytest` runner, 5 tests hitting `/health` and `/chat` with mocked OpenAI client
+- [x] Basic test setup — `pytest` runner, 5 tests hitting `/health` and `/chat` with mocked Gemini client
 - [x] Lint and format via `ruff` — `ruff check` and `ruff format` wired into CI
 
 ## V1.0 — "Flora Awakens"
@@ -33,8 +33,8 @@ Each feature below is scaffolded as `spec/features/NNN-name/` with `spec.md`, `p
 ### 001-conversation-foundation
 What: A REST endpoint the mobile app calls to have a plant-care conversation with the AI. Stateless, no history stored on the agent side.
 - [ ] Define the chat API contract — request/response shape, streaming vs. single-shot, error format
-- [ ] OpenAI client setup — provider key from secret manager, model selection, temperature tuning for a calm friendly tone
-- [ ] System prompt engineering — Brote personality (relaxed, cheerful, non-judgmental), always ends with a concrete next step
+- [ ] Gemini client setup — provider key from secret manager, model selection, temperature tuning for a calm friendly tone
+- [ ] System prompt engineering — Flora personality (relaxed, cheerful, non-judgmental), always ends with a concrete next step
 - [ ] Plant-care scope guardrail — refuse off-topic requests gracefully to avoid wasting credits
 - [ ] Spanish-only responses — all AI output in Spanish, matching the app
 - [ ] Request validation and structured error responses
@@ -62,7 +62,7 @@ What: The AI can write data back to Supabase on the user's behalf when they conf
 ### 004-image-analysis
 What: The user can send photos and the AI analyzes them — plant health, pest/disease symptoms, species identification.
 - [ ] Image upload contract — how the app sends images (direct upload to Supabase Storage + URL, or multipart to the agent)
-- [ ] Vision model integration — send image + prompt to OpenAI vision capabilities
+- [ ] Vision model integration — send image + prompt to Gemini vision capabilities
 - [ ] Plant health diagnosis — analyze leaves for yellowing, spots, pests, dehydration, etc., and recommend care
 - [ ] Plant identification — suggest species from a photo with a confidence indicator
 - [ ] Calibration guidance — ask the user for context (light, recent watering) before diagnosing so the AI avoids inventing answers

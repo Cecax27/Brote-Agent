@@ -1,9 +1,27 @@
 from fastapi import Request
 from fastapi.responses import JSONResponse
 
+from app.agent.loop import UpstreamError
 from app.logging import get_logger
 
 logger = get_logger(__name__)
+
+
+async def upstream_exception_handler(request: Request, exc: UpstreamError) -> JSONResponse:
+    logger.warning(
+        "upstream_error",
+        path=request.url.path,
+        error=str(exc),
+    )
+    return JSONResponse(
+        status_code=502,
+        content={
+            "error": {
+                "code": "UPSTREAM_ERROR",
+                "message": str(exc),
+            },
+        },
+    )
 
 
 async def validation_exception_handler(request: Request, exc: Exception) -> JSONResponse:

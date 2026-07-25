@@ -2,7 +2,7 @@
 
 ## Approach
 
-Lock Brote's conversational voice and guardrails onto the existing stateless `/chat` endpoint — no new routes, no persistence, no streaming. The work is small because V0.1 already laid the pipe (FastAPI → `google-genai` → Gemini → Spanish reply). 001 is mostly content (the system prompt), one behavioral guardrail (off-topic refusal), one error-honesty fix (502 vs 500), and a constitution reconciliation.
+Lock Flora's conversational voice and guardrails onto the existing stateless `/chat` endpoint — no new routes, no persistence, no streaming. The work is small because V0.1 already laid the pipe (FastAPI → `google-genai` → Gemini → Spanish reply). 001 is mostly content (the system prompt), one behavioral guardrail (off-topic refusal), one error-honesty fix (502 vs 500), and a constitution reconciliation.
 
 Sequenced so each phase produces something verifiable:
 
@@ -49,7 +49,7 @@ Key flows (delta from V0.1):
 Recommended defaults, all confirmable before code touches:
 
 - **Provider:** Google Gemini via the `google-genai` SDK — already the running service and what `AGENTS.md`/`mission.md` describe. This feature reconciles `tech-stack.md`/`roadmap.md` to match.
-- **Model:** `gemini-2.5-flash` (current default) — cheap and fast enough for a chatty, friendly tone; overridable via `GEMINI_MODEL`. Confirm given cost/latency appetite.
+- **Model:** `gemini-3.5-flash-lite` (make default) — cheap and fast enough for a chatty, friendly tone; overridable via `GEMINI_MODEL`. Confirm given cost/latency appetite.
 - **Temperature:** `0.7` (current) — warm and slightly varied without losing reliability; the `0.6–0.8` range is acceptable. Confirm.
 - **Max output tokens:** `1024` — enough for an explained reply plus a concrete next step. Confirm.
 - **Scope guardrail mechanism:** prompt-based, single-call. No separate off-topic classifier — it would double cost and latency for marginal benefit at this stage. Revisit only if the prompt guardrail proves leaky (tracked as a backlog note).

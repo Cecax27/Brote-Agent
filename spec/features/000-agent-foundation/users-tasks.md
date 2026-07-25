@@ -4,30 +4,30 @@ Things only you can do (accounts, billing, IAM, credentials, cloud setup). The c
 
 ## Decisions to confirm (Phase 0)
 
-- [ ] **Web framework** — FastAPI + Uvicorn (recommended). Confirm or override.
-- [ ] **Python version** — 3.12. Confirm.
-- [ ] **Logging library** — `structlog` JSON to stdout. Confirm.
-- [ ] **CI provider** — GitHub Actions. Confirm.
-- [ ] **Default OpenAI model** — `gpt-4o-mini` for the placeholder persona (cheap for smoke tests). Confirm based on your OpenAI plan / cost appetite.
-- [ ] **Cloud Run region** — recommend `europe-west1` (closest to the Spanish-speaking Brote audience). Pick your region.
-- [ ] **Cloud Run service name** — e.g. `brote-agent`. Pick one.
-- [ ] **Agree to populate `spec/constitution/tech-stack.md`** — it is empty (0 bytes); the foundation feature needs it to exist per AGENTS.md.
+- [x] **Web framework** — FastAPI + Uvicorn (recommended). Confirm or override.
+- [x] **Python version** — 3.12. Confirm.
+- [x] **Logging library** — `structlog` JSON to stdout. Confirm.
+- [x] **CI provider** — GitHub Actions. Confirm.
+- [ ] **Default Gemini model** — `gemini-3.5-flash-lite` for the placeholder persona (cheap for smoke tests). Confirm based on your Gemini plan / cost appetite.
+- [x] **Cloud Run region** — recommend `us-central1` (closest to the Spanish-speaking Brote audience). Pick your region.
+- [x] **Cloud Run service name** — e.g. `brote-agent`. Pick one.
+- [x] **Agree to populate `spec/constitution/tech-stack.md`** — it is empty (0 bytes); the foundation feature needs it to exist per AGENTS.md.
 
-## OpenAI setup
+## Gemini setup
 
-- [ ] Have an OpenAI account with billing configured.
-- [ ] Create an OpenAI API key for the foundation service (consider a restricted/low-spend key).
-- [ ] (Optional) Set an org-level spend cap so manual `/chat` tests can't run away.
+- [x] Have an Gemini account with billing configured.
+- [x] Create an Gemini API key for the foundation service (consider a restricted/low-spend key).
+- [x] (Optional) Set an org-level spend cap so manual `/chat` tests can't run away.
 
 ## GCP setup
 
-- [ ] Have a GCP project (note the Project ID).
-- [ ] Enable APIs: Cloud Run, Cloud Build, Artifact Registry, Secret Manager.
-- [ ] Create an Artifact Registry Docker repository for the image (note repo path and region).
-- [ ] Create a Secret Manager secret for the OpenAI key (e.g. `openai-api-key`) and set its value to the OpenAI key from above.
+- [x] Have a GCP project (note the Project ID).
+- [x] Enable APIs: Cloud Run, Cloud Build, Artifact Registry, Secret Manager.
+- [x] Create an Artifact Registry Docker repository for the image (note repo path and region).
+- [ ] Create a Secret Manager secret for the Gemini key (e.g. `gemini-api-key`) and set its value to the Gemini key from above.
 - [ ] Grant the **Secret Manager Secret Accessor** role on that secret to the Cloud Run runtime service account (so the service can read the key at runtime).
 - [ ] Grant the **Secret Manager Secret Accessor** role on that secret to the Cloud Build service account if the build/deploy pipeline needs it (depending on your `--set-secrets` approach).
-- [ ] Enable Cloud Build to deploy to Cloud Run: grant the Cloud Build service account the **Cloud Run Admin** role (and Service Account User on the runtime SA) for `gcloud run deploy`.
+- [x] Enable Cloud Build to deploy to Cloud Run: grant the Cloud Build service account the **Cloud Run Admin** role (and Service Account User on the runtime SA) for `gcloud run deploy`.
 
 ## Git / CI auth
 
@@ -39,16 +39,16 @@ Things only you can do (accounts, billing, IAM, credentials, cloud setup). The c
 
 ## Local dev prerequisites
 
-- [ ] Install `uv` locally.
-- [ ] Have a local OpenAI API key for dev (can be the same as the Secret Manager secret value; keep it in a gitignored `.env`, never in the repo).
-- [ ] Install the Google Cloud CLI (`gcloud`) and run `gcloud auth login` + `gcloud config set project <PROJECT_ID>` (needed for the first deploy/`cloudbuild.yaml` runs from your machine if you deploy manually before CI).
+- [x] Install `uv` locally.
+- [x] Have a local Gemini API key for dev (can be the same as the Secret Manager secret value; keep it in a gitignored `.env`, never in the repo).
+- [x] Install the Google Cloud CLI (`gcloud`) and run `gcloud auth login` + `gcloud config set project <PROJECT_ID>` (needed for the first deploy/`cloudbuild.yaml` runs from your machine if you deploy manually before CI).
 
 ## First-deploy checklist
 
 Run through this before expecting CI to succeed end-to-end:
 
-- [ ] All "Decisions to confirm" items resolved.
-- [ ] All OpenAI + GCP + Git/CI items above are done.
+- [x] All "Decisions to confirm" items resolved.
+- [x] All Gemini + GCP + Git/CI items above are done.
 - [ ] `spec/constitution/tech-stack.md` populated.
-- [ ] `000-agent-foundation` Phases 1–3 of `tasks.md` complete locally (`/health` and `/chat` work in `uv run`).
+- [x] `000-agent-foundation` Phases 1–3 of `tasks.md` complete locally (`/health` and `/chat` work in `uv run`).
 - [ ] Then proceed to Phase 4 (container + Cloud Run) and let the pipeline cut over to CI.
