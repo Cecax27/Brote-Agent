@@ -4,15 +4,15 @@ Things only you can do (Supabase project, JWT secret, RLS policies, schema, secr
 
 ## Decisions to confirm (Phase 0)
 
-- [ ] **Auth hand-off shape** — `Authorization: Bearer <supabase_access_token>` on `/chat`. Confirm, or propose an alternative the app already uses.
-- [ ] **Token verification mechanism** — local HS256 JWT decode with the Supabase JWT secret (offline, single round-trip saved), vs. calling Supabase's `/auth/v1/user` endpoint. Recommended: local decode. Confirm.
-- [ ] **Scoped client strategy** — reads run as the user via their access token so RLS applies (defense-in-depth). Rejected: service-role key + app-level `user_id` filtering (bypasses RLS if a filter is forgotten). Confirm RLS-as-the-fence.
-- [ ] **`plant_id` on `/chat`** — optional field the app sends when the user is inside a plant's own space; absent → light inventory across all the user's plants. Confirm this matches the app's chat UX.
-- [ ] **Photo handling in 002** — metadata only (count + last-taken date); image bytes/content analysis is deferred to feature 004. Confirm.
-- [ ] **Supabase client library** — official `supabase-py` async client. Confirm it fits the load profile.
-- [ ] **New error code** — `401 UNAUTHORIZED`; no `403` (RLS turns "can't see" into "doesn't exist"). Confirm the 401 message (`"Debes iniciar sesión para continuar."`) is acceptable to show in the app.
-- [ ] **Context caps defaults** — light ≤ 20 plants; deep ≤ 10 recent entries per history type. Confirm or set based on your data shape.
-- [ ] **JWT secret naming** — Secret Manager secret `supabase-jwt-secret` (mirrors `gemini-api-key`). Confirm the name.
+- [x] **Auth hand-off shape** — `Authorization: Bearer <supabase_access_token>` on `/chat`. Confirm, or propose an alternative the app already uses.
+- [x] **Token verification mechanism** — local HS256 JWT decode with the Supabase JWT secret (offline, single round-trip saved), vs. calling Supabase's `/auth/v1/user` endpoint. Recommended: local decode. Confirm.
+- [x] **Scoped client strategy** — reads run as the user via their access token so RLS applies (defense-in-depth). Rejected: service-role key + app-level `user_id` filtering (bypasses RLS if a filter is forgotten). Confirm RLS-as-the-fence.
+- [x] **`plant_id` on `/chat`** — optional field the app sends when the user is inside a plant's own space; absent → light inventory across all the user's plants. Confirm this matches the app's chat UX.
+- [x] **Photo handling in 002** — metadata only (count + last-taken date); image bytes/content analysis is deferred to feature 004. Confirm.
+- [x] **Supabase client library** — official `supabase-py` async client. Confirm it fits the load profile.
+- [x] **New error code** — `401 UNAUTHORIZED`; no `403` (RLS turns "can't see" into "doesn't exist"). Confirm the 401 message (`"Debes iniciar sesión para continuar."`) is acceptable to show in the app.
+- [x] **Context caps defaults** — light ≤ 20 plants; deep ≤ 10 recent entries per history type. Confirm or set based on your data shape.
+- [x] **JWT secret naming** — Secret Manager secret `supabase-jwt-secret` (mirrors `gemini-api-key`). Confirm the name.
 
 ## Supabase project setup
 

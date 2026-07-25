@@ -10,3 +10,9 @@ class Settings(BaseSettings):
     gemini_max_output_tokens: int = 1024
     port: int = 8080
     log_level: str = "INFO"
+
+    supabase_url: str = ""
+    supabase_jwt_secret: str = ""
+    auth_jwt_audience: str = "authenticated"
+    context_max_plants: int = 20
+    context_max_recent_entries: int = 10
