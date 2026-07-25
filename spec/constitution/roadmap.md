@@ -6,23 +6,23 @@ The bare minimum to have a running agent online: a Python service exposing a RES
 
 ### 000-agent-foundation
 What: The skeleton of the whole project — project layout, dependencies, a minimal REST API, a basic agent call to OpenAI, and an automated Cloud Run deploy.
-- [ ] Initialize `uv` project — `pyproject.toml`, `uv.lock`, Python version pin
-- [ ] Project layout — `app/` package with `main.py` entrypoint, `agent/` module, `config/` for settings, `tests/`
-- [ ] Config and env loading — `pydantic-settings` reading env vars (OpenAI key, port, model name); no secrets in code
-- [ ] Minimal web framework — pick one, mount a `/health` endpoint that returns 200 (used by Cloud Run)
-- [ ] Basic REST API contract documented — routes, request/response JSON shapes, error structure
-- [ ] Minimal agent loop — a single `POST` endpoint (e.g. `/chat`) that receives a message, calls OpenAI with a bare system prompt, returns the reply
-- [ ] Placeholder system prompt — just enough persona (calm, Spanish, plant-care focused) to test end-to-end
-- [ ] Structured logging — JSON logs to stdout (Cloud Run captures stdout)
-- [ ] Error handling — structured JSON error responses, never leak stack traces to the client
-- [ ] Local dev workflow documented — `uv run`, local run command, how to point at a test OpenAI key
-- [ ] `Dockerfile` — multi-stage, lean runtime image, listen on `$PORT`
-- [ ] Cloud Run deploy config — `cloudbuild.yaml` or `gcloud run deploy` invocation, region, memory, concurrency, min instances set to 0
-- [ ] Secret management — load OpenAI key from Secret Manager (or Secret Manager env var), never baked into the image
-- [ ] CI pipeline — on push to `main`, build image and deploy to Cloud Run
-- [ ] Smoke test against the live endpoint after deploy (hit `/health`)
-- [ ] Basic test setup — `pytest` runner, one test hitting the `/chat` endpoint with a mocked OpenAI client
-- [ ] Lint and format via `ruff` — `ruff check` and `ruff format` wired into CI
+- [x] Initialize `uv` project — `pyproject.toml`, `uv.lock`, Python version pin
+- [x] Project layout — `app/` package with `main.py` entrypoint, `agent/` module, `config/` for settings, `tests/`
+- [x] Config and env loading — `pydantic-settings` reading env vars (OpenAI key, port, model name); no secrets in code
+- [x] Minimal web framework — FastAPI, mount a `/health` endpoint that returns 200 (used by Cloud Run)
+- [x] Basic REST API contract documented — routes, request/response JSON shapes, error structure
+- [x] Minimal agent loop — a single `POST /chat` endpoint that receives a message, calls OpenAI with a bare system prompt, returns the reply
+- [x] Placeholder system prompt — just enough persona (calm, Spanish, plant-care focused) to test end-to-end
+- [x] Structured logging — JSON logs to stdout (Cloud Run captures stdout)
+- [x] Error handling — structured JSON error responses, never leak stack traces to the client
+- [x] Local dev workflow documented — `uv run`, local run command, how to point at a test OpenAI key
+- [x] `Dockerfile` — multi-stage, lean runtime image, listen on `$PORT`
+- [x] Cloud Run deploy config — `cloudbuild.yaml`, region, memory, concurrency, min instances set to 0
+- [x] Secret management — load OpenAI key from Secret Manager, never baked into the image
+- [x] CI pipeline — GitHub Actions on push to `main`: lint, test, build, deploy, smoke test
+- [x] Smoke test against the live endpoint after deploy (hit `/health`)
+- [x] Basic test setup — `pytest` runner, 5 tests hitting `/health` and `/chat` with mocked OpenAI client
+- [x] Lint and format via `ruff` — `ruff check` and `ruff format` wired into CI
 
 ## V1.0 — "Flora Awakens"
 

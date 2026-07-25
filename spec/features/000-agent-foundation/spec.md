@@ -1,6 +1,6 @@
 # 000 - Agent Foundation
 
-**Status:** Planning
+**Status:** Code Complete — awaiting cloud prerequisites (see users-tasks.md)
 
 ## What makes
 
