@@ -8,7 +8,7 @@ AI agent backend for the Brote plant-care mobile app. A Python service on Google
 
 - Python 3.12+
 - [uv](https://docs.astral.sh/uv/) (Python package manager)
-- An OpenAI API key
+- A Gemini API key
 
 ### Setup
 
@@ -18,7 +18,7 @@ uv sync --all-extras
 
 # Copy env template and fill in your API key
 cp .env.example .env
-# Edit .env with your OPENAI_API_KEY
+# Edit .env with your GEMINI_API_KEY
 ```
 
 ### Run locally

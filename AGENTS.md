@@ -8,7 +8,7 @@ AI agent backend for the Brote plant-care mobile app. Read `mission.md` — ever
 
 - **Language:** Python
 - **Runtime:** Google Cloud Run (serverless containers)
-- **LLM provider:** OpenAI
+- **LLM provider:** Google Gemini
 - **Database:** Supabase (Postgres)
 - **Client:** React Native (Expo) Android app — this project only exposes an API for it
 
@@ -17,7 +17,7 @@ AI agent backend for the Brote plant-care mobile app. Read `mission.md` — ever
 - Expose a REST API consumed by the mobile app
 - Connect to Supabase for reading/writing user and plant data
 - Perform web searches
-- Call OpenAI APIs for AI-assisted responses
+- Call Gemini APIs for AI-assisted responses
 
 ## Conventions (to establish)
 

@@ -18,7 +18,7 @@ steps:
       - "--min-instances=0"
       - "--concurrency=80"
       - "--memory=512Mi"
-      - "--set-secrets=OPENAI_API_KEY=openai-api-key:latest"
+      - "--set-secrets=GEMINI_API_KEY=gemini-api-key:latest"
       - "--cpu=1"
       - "--timeout=30s"
 
