@@ -7,8 +7,9 @@ logger = get_logger(__name__)
 
 
 class UserIdentity:
-    def __init__(self, sub: str) -> None:
+    def __init__(self, sub: str, access_token: str) -> None:
         self.sub = sub
+        self.access_token = access_token
 
     def __repr__(self) -> str:
         return f"UserIdentity(sub={self.sub})"
@@ -27,12 +28,5 @@ async def get_authenticated_user(request: Request) -> UserIdentity:
         logger.warning("auth_header_malformed")
         raise AuthError(AUTH_ERROR_MESSAGE)
 
-    issuer = f"{settings.supabase_url}/auth/v1"
-    claims = verify_access_token(
-        token,
-        secret=settings.supabase_jwt_secret,
-        audience=settings.auth_jwt_audience,
-        issuer=issuer,
-    )
-
-    return UserIdentity(sub=claims["sub"])
+    data = await verify_access_token(settings.supabase_url, token)
+    return UserIdentity(sub=data["id"], access_token=token)

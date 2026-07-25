@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
 from supabase import create_async_client
 
@@ -13,9 +13,15 @@ if TYPE_CHECKING:
 logger = get_logger(__name__)
 
 
-async def build_user_client(url: str, access_token: str) -> "AsyncClient":
+async def build_user_client(
+    url: str, anon_key: str, access_token: str
+) -> "AsyncClient":
     try:
-        client: Any = await create_async_client(url, access_token)
+        client = await create_async_client(
+            url,
+            anon_key,
+        )
+        await client.auth.set_session(access_token, "")
     except Exception as exc:
         logger.exception("supabase_client_create_failed")
         raise UpstreamError(

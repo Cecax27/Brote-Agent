@@ -110,8 +110,8 @@ brote-agent/
 - **CI:** GitHub Actions on push to `main`: lint, format check, tests, build, deploy, smoke test.
 - **Cloud Run:** `us-central1`, min-instances=0, concurrency=80, memory=512Mi. Gemini key from Secret Manager as `GEMINI_API_KEY` env var.
 - **Secrets:** Never in code, never in images, never in logs. `.env` in dev (gitignored).
-- **Supabase:** Official `supabase-py` async client. RLS-scoped reads via the user's access token (defense-in-depth). Never use a service-role key for user-facing reads.
-- **Auth:** `Authorization: Bearer <supabase_access_token>` on `/chat`. Local HS256 JWT verification with the Supabase JWT secret. The agent verifies identity, never authenticates.
+- **Supabase:** Official `supabase-py` async client. RLS-scoped reads via the user's access token (defense-in-depth). Never use the service-role key for user-facing reads — it bypasses RLS.
+- **Auth:** `Authorization: Bearer <supabase_access_token>` on `/chat`. Token verified by calling Supabase's `/auth/v1/user` endpoint. The agent verifies identity, never authenticates.
 - **Privacy:** Context contents (journal text, plant names) are never logged — only row counts and durations. RLS is the isolation fence; application code never filters by `user_id` manually.
 - **Language:** All AI responses in Spanish. Code and docs in English.
 

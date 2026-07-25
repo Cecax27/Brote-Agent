@@ -12,7 +12,7 @@ class Settings(BaseSettings):
     log_level: str = "INFO"
 
     supabase_url: str = ""
-    supabase_jwt_secret: str = ""
-    auth_jwt_audience: str = "authenticated"
+    supabase_anon_key: str = ""
+    supabase_service_role_key: str = ""
     context_max_plants: int = 20
     context_max_recent_entries: int = 10

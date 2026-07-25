@@ -44,8 +44,11 @@ async def chat(
     settings: "Settings" = request.app.state.settings
     start = time.monotonic()
 
-    access_token = request.headers["authorization"].removeprefix("Bearer ").strip()
-    client = await build_user_client(settings.supabase_url, access_token)
+    client = await build_user_client(
+        settings.supabase_url,
+        settings.supabase_anon_key,
+        user.access_token,
+    )
 
     bundle = await build_plant_context(
         client,

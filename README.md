@@ -19,7 +19,7 @@ uv sync --all-extras
 
 # Copy env template and fill in your API key
 cp .env.example .env
-# Edit .env with your GEMINI_API_KEY, SUPABASE_URL, and SUPABASE_JWT_SECRET
+# Edit .env with your GEMINI_API_KEY, SUPABASE_URL, and SUPABASE_ANON_KEY
 ```
 
 ### Run locally

@@ -11,11 +11,13 @@ from app.supabase.context import ContextBundle, DeepPlantContext, PlantSummary
 async def test_chat_passes_context_to_gemini(
     client: AsyncClient,
     mock_gemini: AsyncMock,
+    mock_auth_verify: AsyncMock,
     mock_supabase_client: AsyncMock,
     mock_supabase_context: AsyncMock,
     auth_headers: dict,
 ) -> None:
     mock_gemini.return_value = "Tu Monstera está bien."
+    mock_auth_verify.return_value = {"id": "test-user-id"}
     mock_supabase_context.return_value = ContextBundle(light=[])
 
     await client.post(
@@ -34,11 +36,13 @@ async def test_chat_passes_context_to_gemini(
 async def test_chat_uses_deep_mode_when_plant_id_set(
     client: AsyncClient,
     mock_gemini: AsyncMock,
+    mock_auth_verify: AsyncMock,
     mock_supabase_client: AsyncMock,
     mock_supabase_context: AsyncMock,
     auth_headers: dict,
 ) -> None:
     mock_gemini.return_value = "Tu planta está creciendo muy bien."
+    mock_auth_verify.return_value = {"id": "test-user-id"}
     mock_supabase_context.return_value = ContextBundle(
         deep=DeepPlantContext(
             plant=PlantSummary(
@@ -66,11 +70,13 @@ async def test_chat_uses_deep_mode_when_plant_id_set(
 async def test_chat_uses_light_mode_when_no_plant_id(
     client: AsyncClient,
     mock_gemini: AsyncMock,
+    mock_auth_verify: AsyncMock,
     mock_supabase_client: AsyncMock,
     mock_supabase_context: AsyncMock,
     auth_headers: dict,
 ) -> None:
     mock_gemini.return_value = "Tienes 3 plantas que necesitan atención."
+    mock_auth_verify.return_value = {"id": "test-user-id"}
     mock_supabase_context.return_value = ContextBundle(light=[])
 
     await client.post(
@@ -88,10 +94,12 @@ async def test_chat_uses_light_mode_when_no_plant_id(
 async def test_chat_supabase_failure_returns_502(
     client: AsyncClient,
     mock_gemini: AsyncMock,
+    mock_auth_verify: AsyncMock,
     mock_supabase_client: AsyncMock,
     mock_supabase_context: AsyncMock,
     auth_headers: dict,
 ) -> None:
+    mock_auth_verify.return_value = {"id": "test-user-id"}
     mock_supabase_context.side_effect = UpstreamError(
         "El servicio de datos no respondió. Inténtalo de nuevo en un momento."
     )
@@ -112,11 +120,13 @@ async def test_chat_supabase_failure_returns_502(
 async def test_chat_context_sets_data_minimization_bounds(
     client: AsyncClient,
     mock_gemini: AsyncMock,
+    mock_auth_verify: AsyncMock,
     mock_supabase_client: AsyncMock,
     mock_supabase_context: AsyncMock,
     auth_headers: dict,
 ) -> None:
     mock_gemini.return_value = "Todo bien."
+    mock_auth_verify.return_value = {"id": "test-user-id"}
     mock_supabase_context.return_value = ContextBundle(light=[])
 
     await client.post(
@@ -134,6 +144,7 @@ async def test_chat_context_sets_data_minimization_bounds(
 async def test_chat_off_topic_refusal_still_works(
     client: AsyncClient,
     mock_gemini: AsyncMock,
+    mock_auth_verify: AsyncMock,
     mock_supabase_client: AsyncMock,
     mock_supabase_context: AsyncMock,
     auth_headers: dict,
@@ -142,6 +153,7 @@ async def test_chat_off_topic_refusal_still_works(
         "Me encantaría poder ayudarte con eso, pero yo soy Flora, "
         "solo sé de plantas. ¿Tienes alguna planta de la que quieras hablarme?"
     )
+    mock_auth_verify.return_value = {"id": "test-user-id"}
     mock_supabase_context.return_value = ContextBundle(light=[])
 
     response = await client.post(
@@ -159,11 +171,13 @@ async def test_chat_off_topic_refusal_still_works(
 async def test_chat_reply_still_in_spanish(
     client: AsyncClient,
     mock_gemini: AsyncMock,
+    mock_auth_verify: AsyncMock,
     mock_supabase_client: AsyncMock,
     mock_supabase_context: AsyncMock,
     auth_headers: dict,
 ) -> None:
     mock_gemini.return_value = "¡Claro! Las suculentas necesitan mucha luz."
+    mock_auth_verify.return_value = {"id": "test-user-id"}
     mock_supabase_context.return_value = ContextBundle(light=[])
 
     response = await client.post(
