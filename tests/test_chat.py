@@ -15,10 +15,14 @@ async def test_health_returns_ok(client: AsyncClient) -> None:
 
 
 @pytest.mark.asyncio
-async def test_chat_returns_reply(client: AsyncClient, mock_gemini: AsyncMock) -> None:
+async def test_chat_returns_reply(
+    client: AsyncClient, mock_gemini: AsyncMock, auth_headers: dict
+) -> None:
     mock_gemini.return_value = "Hola, ¿cómo puedo ayudarte con tus plantas?"
 
-    response = await client.post("/chat", json={"message": "Tengo una monstera"})
+    response = await client.post(
+        "/chat", json={"message": "Tengo una monstera"}, headers=auth_headers
+    )
 
     assert response.status_code == 200
     data = response.json()
@@ -28,8 +32,10 @@ async def test_chat_returns_reply(client: AsyncClient, mock_gemini: AsyncMock) -
 
 
 @pytest.mark.asyncio
-async def test_chat_empty_message_returns_422(client: AsyncClient) -> None:
-    response = await client.post("/chat", json={"message": ""})
+async def test_chat_empty_message_returns_422(
+    client: AsyncClient, auth_headers: dict
+) -> None:
+    response = await client.post("/chat", json={"message": ""}, headers=auth_headers)
     assert response.status_code == 422
     data = response.json()
     assert "error" in data
@@ -37,19 +43,23 @@ async def test_chat_empty_message_returns_422(client: AsyncClient) -> None:
 
 
 @pytest.mark.asyncio
-async def test_chat_missing_message_returns_422(client: AsyncClient) -> None:
-    response = await client.post("/chat", json={})
+async def test_chat_missing_message_returns_422(
+    client: AsyncClient, auth_headers: dict
+) -> None:
+    response = await client.post("/chat", json={}, headers=auth_headers)
     assert response.status_code == 422
     data = response.json()
     assert "error" in data
 
 
-def test_chat_upstream_error_returns_502(sync_client: TestClient, mock_gemini: AsyncMock) -> None:
+def test_chat_upstream_error_returns_502(
+    sync_client: TestClient, mock_gemini: AsyncMock, auth_headers: dict
+) -> None:
     mock_gemini.side_effect = UpstreamError(
         "El servicio de IA no respondió. Inténtalo de nuevo en un momento."
     )
 
-    response = sync_client.post("/chat", json={"message": "test"})
+    response = sync_client.post("/chat", json={"message": "test"}, headers=auth_headers)
 
     assert response.status_code == 502
     data = response.json()
@@ -58,10 +68,12 @@ def test_chat_upstream_error_returns_502(sync_client: TestClient, mock_gemini: A
     assert "El servicio" in data["error"]["message"]
 
 
-def test_chat_unexpected_error_returns_500(sync_client: TestClient, mock_gemini: AsyncMock) -> None:
+def test_chat_unexpected_error_returns_500(
+    sync_client: TestClient, mock_gemini: AsyncMock, auth_headers: dict
+) -> None:
     mock_gemini.side_effect = Exception("Unexpected internal failure")
 
-    response = sync_client.post("/chat", json={"message": "test"})
+    response = sync_client.post("/chat", json={"message": "test"}, headers=auth_headers)
 
     assert response.status_code == 500
     data = response.json()
