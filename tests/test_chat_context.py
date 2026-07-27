@@ -47,10 +47,10 @@ async def test_chat_uses_deep_mode_when_plant_id_set(
         deep=DeepPlantContext(
             plant=PlantSummary(
                 id="plant-123",
-                nickname="Monstera",
+                name="Monstera",
                 species="Monstera deliciosa",
-                last_watered="2025-01-15",
-                next_watering="2025-01-22",
+                last_watered_at="2025-01-15",
+                next_due_at="2025-01-22",
             )
         )
     )
@@ -62,8 +62,7 @@ async def test_chat_uses_deep_mode_when_plant_id_set(
     )
 
     mock_supabase_context.assert_called_once()
-    call_kwargs = mock_supabase_context.call_args.kwargs
-    assert call_kwargs["plant_id"] == "plant-123"
+    assert mock_supabase_context.call_args[0][1] == "plant-123"
 
 
 @pytest.mark.asyncio
@@ -86,8 +85,7 @@ async def test_chat_uses_light_mode_when_no_plant_id(
     )
 
     mock_supabase_context.assert_called_once()
-    call_kwargs = mock_supabase_context.call_args.kwargs
-    assert call_kwargs["plant_id"] is None
+    assert mock_supabase_context.call_args[0][1] is None
 
 
 @pytest.mark.asyncio
@@ -176,7 +174,7 @@ async def test_chat_reply_still_in_spanish(
     mock_supabase_context: AsyncMock,
     auth_headers: dict,
 ) -> None:
-    mock_gemini.return_value = "¡Claro! Las suculentas necesitan mucha luz."
+    mock_gemini.return_value = "¡Claro! Las suculentas necesitan mucha luz y cariño."
     mock_auth_verify.return_value = {"id": "test-user-id"}
     mock_supabase_context.return_value = ContextBundle(light=[])
 
@@ -189,9 +187,5 @@ async def test_chat_reply_still_in_spanish(
     assert response.status_code == 200
     data = response.json()
     assert any(
-        "\u00e1" in data["reply"].lower()
-        or "\u00e9" in data["reply"].lower()
-        or "\u00f3" in data["reply"].lower()
-        or "\u00fa" in data["reply"].lower()
-        or "\u00f1" in data["reply"].lower()
+        char in data["reply"].lower() for char in ("\u00e1", "\u00e9", "\u00f3", "\u00fa", "\u00f1")
     )

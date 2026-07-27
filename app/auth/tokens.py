@@ -1,5 +1,6 @@
 import httpx
 
+from app.config.settings import Settings
 from app.logging import get_logger
 
 logger = get_logger(__name__)
@@ -18,7 +19,7 @@ async def verify_access_token(url: str, token: str) -> dict:
                 f"{url}/auth/v1/user",
                 headers={
                     "Authorization": f"Bearer {token}",
-                    "apikey": token,
+                    "apikey": Settings().supabase_anon_key,
                 },
             )
     except httpx.HTTPError as exc:

@@ -41,8 +41,10 @@ async def test_chat_returns_reply(
 
 @pytest.mark.asyncio
 async def test_chat_empty_message_returns_422(
-    client: AsyncClient, auth_headers: dict
+    client: AsyncClient, mock_auth_verify: AsyncMock, auth_headers: dict
 ) -> None:
+    mock_auth_verify.return_value = {"id": "test-user-id"}
+
     response = await client.post("/chat", json={"message": ""}, headers=auth_headers)
     assert response.status_code == 422
     data = response.json()
@@ -52,8 +54,10 @@ async def test_chat_empty_message_returns_422(
 
 @pytest.mark.asyncio
 async def test_chat_missing_message_returns_422(
-    client: AsyncClient, auth_headers: dict
+    client: AsyncClient, mock_auth_verify: AsyncMock, auth_headers: dict
 ) -> None:
+    mock_auth_verify.return_value = {"id": "test-user-id"}
+
     response = await client.post("/chat", json={}, headers=auth_headers)
     assert response.status_code == 422
     data = response.json()
