@@ -53,13 +53,13 @@ What: The AI can read the user's plants and their history. Security and privacy 
 
 ### 003-supabase-write-actions
 What: The AI can write data back to Supabase on the user's behalf when they confirm an action.
-- [ ] Define the writable surface — which tables/fields the AI is allowed to write (e.g., watering schedules, journal entries)
-- [ ] Proposed-action flow — AI suggests an action, returns a structured action payload, app asks the user to confirm
-- [ ] Confirm-and-execute endpoint — agent writes to Supabase only after explicit user confirmation
-- [ ] Example flow: watering schedule — user asks watering frequency, AI answers and offers to create the schedule, user confirms, AI writes it
-- [ ] Write under the user's identity — writes respect RLS / user_id ownership
-- [ ] Save-a-tip flow — let the user save a useful snippet from a conversation into a plant's journal before the conversation disappears
-- [ ] Audit logging — record what the AI wrote on whose behalf
+- [x] Define the writable surface — which tables/fields the AI is allowed to write (e.g., watering schedules, journal entries)
+- [x] Proposed-action flow — AI suggests an action, returns a structured action payload, app asks the user to confirm
+- [x] Confirm-and-execute endpoint — agent writes to Supabase only after explicit user confirmation
+- [x] Example flow: watering schedule — user asks watering frequency, AI answers and offers to create the schedule, user confirms, AI writes it
+- [x] Write under the user's identity — writes respect RLS / user_id ownership
+- [x] Save-a-tip flow — let the user save a useful snippet from a conversation into a plant's journal before the conversation disappears
+- [x] Audit logging — record what the AI wrote on whose behalf
 
 ### 004-image-analysis
 What: The user can send photos and the AI analyzes them — plant health, pest/disease symptoms, species identification.
