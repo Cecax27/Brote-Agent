@@ -44,6 +44,32 @@ class HealthResponse(BaseModel):
     status: str
 
 
+ACTION_PAYLOAD_SCHEMA: dict[str, Any] = {
+    "type": "OBJECT",
+    "properties": {
+        "frequency_days": {
+            "type": "NUMBER",
+            "description": "Días entre riegos. Requerido para create_watering_schedule.",
+        },
+        "next_due_at": {
+            "type": "STRING",
+            "description": "Fecha del próximo riego ISO8601. Requerido para create_watering_schedule.",
+        },
+        "last_watered_at": {
+            "type": "STRING",
+            "description": "Fecha del último riego ISO8601. Opcional, solo para create_watering_schedule.",
+        },
+        "notify_time": {
+            "type": "STRING",
+            "description": "Hora de notificación HH:MM:SS. Opcional, solo para create_watering_schedule.",
+        },
+        "content": {
+            "type": "STRING",
+            "description": "Texto del consejo a guardar. Requerido para add_journal_entry.",
+        },
+    },
+}
+
 ACTION_RESPONSE_SCHEMA: dict[str, Any] = {
     "type": "OBJECT",
     "properties": {
@@ -56,10 +82,13 @@ ACTION_RESPONSE_SCHEMA: dict[str, Any] = {
                     "type": "STRING",
                     "enum": ["create_watering_schedule", "add_journal_entry"],
                 },
-                "plant_id": {"type": "STRING"},
+                "plant_id": {
+                    "type": "STRING",
+                    "description": "UUID de la planta tal como aparece en el contexto (id: ...).",
+                },
                 "title": {"type": "STRING"},
                 "summary_es": {"type": "STRING"},
-                "payload": {"type": "OBJECT"},
+                "payload": ACTION_PAYLOAD_SCHEMA,
             },
             "required": ["action_type", "plant_id", "title", "summary_es", "payload"],
         },
