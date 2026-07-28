@@ -16,3 +16,6 @@ class Settings(BaseSettings):
     supabase_service_role_key: str = ""
     context_max_plants: int = 20
     context_max_recent_entries: int = 10
+
+    action_signing_secret: str = ""
+    action_token_ttl_seconds: int = 300

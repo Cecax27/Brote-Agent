@@ -4,20 +4,20 @@ Things only you can do (Supabase project, RLS `INSERT` policies, secret manageme
 
 ## Writable surface (this is what 003 writes)
 
-- [ ] Confirm the agent may **create** rows in these two tables only, under the caller's RLS-scoped token:
+- [x] Confirm the agent may **create** rows in these two tables only, under the caller's RLS-scoped token:
   - `watering_schedules` — new active schedule per `(plant_id, user_id)`; creating one deactivates the user's prior active schedule for that plant
   - `journal_entries` — only with `type="observation"` (the save-a-tip flow); `content` ≤ 2000 chars
-- [ ] Confirm the agent may **not** write to (V1.0 of 003): `plants.*` (no edits/deletes), `light_measurements`, `ai_conversations`, `ai_messages`. Conversation persistence is a Non-Goal; saving a tip writes a `journal_entries` row, not a chat transcript.
+- [x] Confirm the agent may **not** write to (V1.0 of 003): `plants.*` (no edits/deletes), `light_measurements`, `ai_conversations`, `ai_messages`. Conversation persistence is a Non-Goal; saving a tip writes a `journal_entries` row, not a chat transcript.
 
 ## Row Level Security — INSERT policies (gates Phase 4 & 8 — safety critical)
 
 RLS is the agent's ownership fence for writes (same posture as 002, but `INSERT` instead of `SELECT`). The agent can build things to *use* RLS but cannot *create* the policies.
 
-- [ ] RLS **enabled** on `watering_schedules` and `journal_entries` (already on per 002 — confirm it stays on).
-- [ ] An `INSERT` policy on each writable table of the form `auth.uid() = user_id` **with `WITH CHECK`** so the row's owner must be the caller (prevents a request body from setting a foreign `user_id`).
-- [ ] An `UPDATE` policy on `watering_schedules` restricting `active` toggles to `auth.uid() = user_id` (needed for the deactivate-then-insert example flow).
-- [ ] Manually verify: a real access token for user A cannot `INSERT`/`UPDATE` a `watering_schedules` row with `user_id` set to user B (one curl with a hand-crafted body is enough — it must be rejected by RLS).
-- [ ] Confirm there is **no** service-role write path the agent will use. The agent writes with the user's access token only; the service-role key is banned for user-facing writes (matches 002's read posture).
+- [x] RLS **enabled** on `watering_schedules` and `journal_entries` (already on per 002 — confirm it stays on).
+- [x] An `INSERT` policy on each writable table of the form `auth.uid() = user_id` **with `WITH CHECK`** so the row's owner must be the caller (prevents a request body from setting a foreign `user_id`).
+- [x] An `UPDATE` policy on `watering_schedules` restricting `active` toggles to `auth.uid() = user_id` (needed for the deactivate-then-insert example flow).
+- [x] Manually verify: a real access token for user A cannot `INSERT`/`UPDATE` a `watering_schedules` row with `user_id` set to user B (one curl with a hand-crafted body is enough — it must be rejected by RLS).
+- [x] Confirm there is **no** service-role write path the agent will use. The agent writes with the user's access token only; the service-role key is banned for user-facing writes (matches 002's read posture).
 
 ## Secret management (Cloud Run)
 
