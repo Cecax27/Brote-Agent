@@ -94,7 +94,7 @@ async def test_chat_valid_token_proceeds(
         )
         mp.setattr(
             "app.api.routes.call_gemini",
-            AsyncMock(return_value="Hola"),
+            AsyncMock(return_value={"reply": "Hola"}),
         )
 
         response = await auth_client.post(

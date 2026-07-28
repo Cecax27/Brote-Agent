@@ -31,6 +31,14 @@ brote-agent/
 │   │   ├── __init__.py
 │   │   ├── tokens.py        # verify_access_token → claims; AuthError
 │   │   └── dependency.py    # get_authenticated_user → UserIdentity
+│   ├── actions/              # Propose → confirm → execute write flow
+│   │   ├── __init__.py
+│   │   ├── models.py         # CreateWateringSchedulePayload, AddJournalEntryPayload, payload_digest
+│   │   ├── registry.py       # ALLOWED_ACTIONS, resolve_action() → ActionSpec
+│   │   ├── tokens.py         # issue_confirm_token / verify_confirm_token (HMAC, single-use)
+│   │   ├── handlers.py       # create_watering_schedule, add_journal_entry (write via RLS)
+│   │   ├── routes.py         # POST /actions/execute
+│   │   └── audit.py          # log_action_executed() → structlog (no content text)
 │   ├── config/
 │   │   ├── __init__.py
 │   │   └── settings.py      # pydantic-settings: GEMINI_API_KEY, SUPABASE_URL, …
@@ -45,7 +53,8 @@ brote-agent/
 │   ├── conftest.py          # Client fixture, Gemini mock, JWT helpers
 │   ├── test_chat.py         # /chat with mocked Gemini; /health smoke
 │   ├── test_auth.py         # 401 paths (missing, malformed, expired, bad sig)
-│   └── test_chat_context.py # context injection, RLS deny, minimization, 502
+│   ├── test_chat_context.py # context injection, RLS deny, minimization, 502
+│   └── test_actions_registry.py  # action model, registry, token lifecycle tests
 ├── docs/
 │   └── api-contract.md      # Routes, request/response JSON, error envelope
 ├── .dockerignore
@@ -73,7 +82,38 @@ brote-agent/
 
 ```json
 {
-  "reply": "string"
+  "reply": "string",
+  "proposed_action": {
+    "action_type": "create_watering_schedule | add_journal_entry",
+    "plant_id": "uuid",
+    "title": "string (short, ES)",
+    "summary_es": "string (ES confirmation line)",
+    "payload": { "..." },
+    "confirm_token": "string (HMAC-signed, single-use, 5-min TTL)"
+  } | null
+}
+```
+
+### POST /actions/execute request
+
+```json
+{
+  "action_type": "create_watering_schedule | add_journal_entry",
+  "plant_id": "uuid",
+  "payload": { "..." },
+  "confirm_token": "string"
+}
+```
+
+**Headers:** `Authorization: Bearer <supabase_access_token>` (required).
+
+### POST /actions/execute response
+
+```json
+{
+  "action_id": "uuid",
+  "action_type": "string",
+  "status": "executed"
 }
 ```
 
@@ -110,7 +150,7 @@ brote-agent/
 - **CI:** GitHub Actions on push to `main`: lint, format check, tests, build, deploy, smoke test.
 - **Cloud Run:** `us-central1`, min-instances=0, concurrency=80, memory=512Mi. Gemini key from Secret Manager as `GEMINI_API_KEY` env var.
 - **Secrets:** Never in code, never in images, never in logs. `.env` in dev (gitignored).
-- **Supabase:** Official `supabase-py` async client. RLS-scoped reads via the user's access token (defense-in-depth). Never use the service-role key for user-facing reads — it bypasses RLS.
+- **Supabase:** Official `supabase-py` async client. RLS-scoped reads and writes via the user's access token (defense-in-depth). Never use the service-role key for user-facing operations — it bypasses RLS. Writes are propose→confirm→execute only; never spontaneous.
 - **Auth:** `Authorization: Bearer <supabase_access_token>` on `/chat`. Token verified by calling Supabase's `/auth/v1/user` endpoint. The agent verifies identity, never authenticates.
 - **Privacy:** Context contents (journal text, plant names) are never logged — only row counts and durations. RLS is the isolation fence; application code never filters by `user_id` manually.
 - **Language:** All AI responses in Spanish. Code and docs in English.
@@ -121,6 +161,7 @@ These are V1.0-scoped limits — features may lift individual items as they land
 
 - ~~No Supabase~~ — lifted by 002 (Supabase read access).
 - ~~No auth~~ — lifted by 002 (JWT verification).
+- ~~No writes~~ — lifted by 003 (propose→confirm→execute flow).
 - No streaming (single-shot responses).
 - No conversation persistence.
 - No image analysis.

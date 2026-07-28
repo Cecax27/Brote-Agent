@@ -16,7 +16,7 @@ async def test_chat_passes_context_to_gemini(
     mock_supabase_context: AsyncMock,
     auth_headers: dict,
 ) -> None:
-    mock_gemini.return_value = "Tu Monstera está bien."
+    mock_gemini.return_value = {"reply": "Tu Monstera está bien."}
     mock_auth_verify.return_value = {"id": "test-user-id"}
     mock_supabase_context.return_value = ContextBundle(light=[])
 
@@ -41,7 +41,7 @@ async def test_chat_uses_deep_mode_when_plant_id_set(
     mock_supabase_context: AsyncMock,
     auth_headers: dict,
 ) -> None:
-    mock_gemini.return_value = "Tu planta está creciendo muy bien."
+    mock_gemini.return_value = {"reply": "Tu planta está creciendo muy bien."}
     mock_auth_verify.return_value = {"id": "test-user-id"}
     mock_supabase_context.return_value = ContextBundle(
         deep=DeepPlantContext(
@@ -74,7 +74,7 @@ async def test_chat_uses_light_mode_when_no_plant_id(
     mock_supabase_context: AsyncMock,
     auth_headers: dict,
 ) -> None:
-    mock_gemini.return_value = "Tienes 3 plantas que necesitan atención."
+    mock_gemini.return_value = {"reply": "Tienes 3 plantas que necesitan atención."}
     mock_auth_verify.return_value = {"id": "test-user-id"}
     mock_supabase_context.return_value = ContextBundle(light=[])
 
@@ -123,7 +123,7 @@ async def test_chat_context_sets_data_minimization_bounds(
     mock_supabase_context: AsyncMock,
     auth_headers: dict,
 ) -> None:
-    mock_gemini.return_value = "Todo bien."
+    mock_gemini.return_value = {"reply": "Todo bien."}
     mock_auth_verify.return_value = {"id": "test-user-id"}
     mock_supabase_context.return_value = ContextBundle(light=[])
 
@@ -147,10 +147,12 @@ async def test_chat_off_topic_refusal_still_works(
     mock_supabase_context: AsyncMock,
     auth_headers: dict,
 ) -> None:
-    mock_gemini.return_value = (
-        "Me encantaría poder ayudarte con eso, pero yo soy Flora, "
-        "solo sé de plantas. ¿Tienes alguna planta de la que quieras hablarme?"
-    )
+    mock_gemini.return_value = {
+        "reply": (
+            "Me encantaría poder ayudarte con eso, pero yo soy Flora, "
+            "solo sé de plantas. ¿Tienes alguna planta de la que quieras hablarme?"
+        )
+    }
     mock_auth_verify.return_value = {"id": "test-user-id"}
     mock_supabase_context.return_value = ContextBundle(light=[])
 
@@ -174,7 +176,7 @@ async def test_chat_reply_still_in_spanish(
     mock_supabase_context: AsyncMock,
     auth_headers: dict,
 ) -> None:
-    mock_gemini.return_value = "¡Claro! Las suculentas necesitan mucha luz y cariño."
+    mock_gemini.return_value = {"reply": "¡Claro! Las suculentas necesitan mucha luz y cariño."}
     mock_auth_verify.return_value = {"id": "test-user-id"}
     mock_supabase_context.return_value = ContextBundle(light=[])
 

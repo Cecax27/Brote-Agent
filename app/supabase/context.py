@@ -286,7 +286,8 @@ def _format_light_context(plants: list[PlantSummary]) -> str:
     for p in plants:
         name = p.name or "Sin nombre"
         species = f" ({p.species})" if p.species else ""
-        parts = [f"  - {name}{species}"]
+        plant_id = p.id or "?"
+        parts = [f"  - {name}{species} (id: {plant_id})"]
         if p.last_watered_at:
             parts.append(f" | último riego: {p.last_watered_at}")
         if p.next_due_at:
@@ -302,7 +303,8 @@ def _format_deep_context(ctx: DeepPlantContext) -> str:
     p = ctx.plant
     name = p.name or "Sin nombre"
     species = f" ({p.species})" if p.species else ""
-    lines = [f"[Contexto — {name}{species}]"]
+    plant_id = p.id or "?"
+    lines = [f"[Contexto — {name}{species} — id: {plant_id}]"]
     if p.last_watered_at:
         lines.append(f"  Último riego: {p.last_watered_at}")
     if p.next_due_at:

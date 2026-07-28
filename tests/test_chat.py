@@ -24,7 +24,7 @@ async def test_chat_returns_reply(
     mock_supabase_context: AsyncMock,
     auth_headers: dict,
 ) -> None:
-    mock_gemini.return_value = "Hola, ¿cómo puedo ayudarte con tus plantas?"
+    mock_gemini.return_value = {"reply": "Hola, ¿cómo puedo ayudarte con tus plantas?"}
     mock_auth_verify.return_value = {"id": "test-user-id"}
     mock_supabase_context.return_value = ContextBundle(light=[])
 
@@ -36,6 +36,7 @@ async def test_chat_returns_reply(
     data = response.json()
     assert "reply" in data
     assert data["reply"] == "Hola, ¿cómo puedo ayudarte con tus plantas?"
+    assert "proposed_action" in data
     mock_gemini.assert_called_once()
 
 
