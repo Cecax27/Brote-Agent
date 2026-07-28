@@ -2,9 +2,26 @@ from fastapi import Request
 from fastapi.responses import JSONResponse
 
 from app.agent.loop import UpstreamError
+from app.auth.tokens import AuthError
 from app.logging import get_logger
 
 logger = get_logger(__name__)
+
+
+async def auth_exception_handler(request: Request, exc: AuthError) -> JSONResponse:
+    logger.warning(
+        "auth_error",
+        path=request.url.path,
+    )
+    return JSONResponse(
+        status_code=401,
+        content={
+            "error": {
+                "code": "UNAUTHORIZED",
+                "message": str(exc),
+            },
+        },
+    )
 
 
 async def upstream_exception_handler(request: Request, exc: UpstreamError) -> JSONResponse:

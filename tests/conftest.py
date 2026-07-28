@@ -1,8 +1,10 @@
 import os
 from collections.abc import AsyncGenerator
-from unittest.mock import AsyncMock, patch
+from unittest.mock import AsyncMock, MagicMock, patch
 
 os.environ.setdefault("GEMINI_API_KEY", "test-key")
+os.environ.setdefault("SUPABASE_URL", "https://test.supabase.co")
+os.environ.setdefault("SUPABASE_ANON_KEY", "test-anon-key")
 
 import pytest
 from httpx import ASGITransport, AsyncClient
@@ -10,11 +12,21 @@ from starlette.testclient import TestClient
 
 from app.config.settings import Settings
 from app.main import create_app
+from app.supabase.context import ContextBundle
 
 
 @pytest.fixture
 def settings() -> Settings:
-    return Settings(gemini_api_key="test-key")  # type: ignore[call-arg]
+    return Settings(  # type: ignore[call-arg]
+        gemini_api_key="test-key",
+        supabase_url="https://test.supabase.co",
+        supabase_anon_key="test-anon-key",
+    )
+
+
+@pytest.fixture
+def auth_headers() -> dict:
+    return {"Authorization": "Bearer test-valid-token"}
 
 
 @pytest.fixture
@@ -39,5 +51,26 @@ def sync_client(app):
 @pytest.fixture
 def mock_gemini():
     patcher = patch("app.api.routes.call_gemini", new_callable=AsyncMock)
+    yield patcher.start()
+    patcher.stop()
+
+
+@pytest.fixture
+def mock_auth_verify():
+    patcher = patch("app.auth.dependency.verify_access_token", new_callable=AsyncMock)
+    yield patcher.start()
+    patcher.stop()
+
+
+@pytest.fixture
+def mock_supabase_context():
+    patcher = patch("app.api.routes.build_plant_context", new_callable=AsyncMock)
+    yield patcher.start()
+    patcher.stop()
+
+
+@pytest.fixture
+def mock_supabase_client():
+    patcher = patch("app.api.routes.build_user_client", new_callable=AsyncMock)
     yield patcher.start()
     patcher.stop()

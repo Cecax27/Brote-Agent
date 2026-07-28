@@ -42,12 +42,14 @@ What: A REST endpoint the mobile app calls to have a plant-care conversation wit
 
 ### 002-supabase-read-access
 What: The AI can read the user's plants and their history. Security and privacy are mandatory — a user can only ever access their own data.
-- [ ] Decide the auth hand-off — how the app passes the Supabase session to the agent (access token in header)
-- [ ] Verify the user's identity — validate the Supabase JWT (JWT secret) or call Supabase auth endpoint
-- [ ] Scoped Supabase client — query as the authenticated user so Row Level Security applies, or use service role with strict user_id filtering
-- [ ] Context builder — gather the relevant plant(s), journal entries, watering schedule, light history, photo references to inject into the AI context window
-- [ ] Data minimization — only fetch what the specific question actually needs
-- [ ] Never expose other users' data — verify scoping on every read path
+- [x] Decide the auth hand-off — how the app passes the Supabase session to the agent (access token in header)
+- [x] Verify the user's identity — validate the Supabase JWT (JWT secret) — local HS256 decode, no round-trip
+- [x] Scoped Supabase client — query as the authenticated user so Row Level Security applies (access token as key)
+- [x] Context builder — gather the relevant plant(s), journal entries, watering schedule, light history, photo metadata to inject into the AI context window
+- [x] Data minimization — capped `.limit()`, date windows, photo metadata only (no URLs/bytes); configurable caps in settings
+- [ ] Verify RLS isolation — confirm PostgREST denial on cross-user reads (manual probe pending)
+- [ ] Ruff — `ruff check` and `ruff format --check` pass
+- [ ] Manual smoke — test against real Supabase project with seeded data (gated on user's Supabase prerequisites)
 
 ### 003-supabase-write-actions
 What: The AI can write data back to Supabase on the user's behalf when they confirm an action.

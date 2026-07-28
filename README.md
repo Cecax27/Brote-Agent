@@ -9,6 +9,7 @@ AI agent backend for the Brote plant-care mobile app. A Python service on Google
 - Python 3.12+
 - [uv](https://docs.astral.sh/uv/) (Python package manager)
 - A Gemini API key
+- A Supabase project (for auth + plant data)
 
 ### Setup
 
@@ -18,7 +19,7 @@ uv sync --all-extras
 
 # Copy env template and fill in your API key
 cp .env.example .env
-# Edit .env with your GEMINI_API_KEY
+# Edit .env with your GEMINI_API_KEY, SUPABASE_URL, and SUPABASE_ANON_KEY
 ```
 
 ### Run locally
@@ -57,7 +58,8 @@ Quick reference:
 
 - `GET /health` — health check (returns `{"status":"ok"}`)
 - `POST /chat` — send a message, get a Spanish plant-care reply
-  - Request: `{"message": "Tengo una monstera"}`
+  - Headers: `Authorization: Bearer <supabase_access_token>`
+  - Request: `{"message": "Tengo una monstera", "plant_id": "optional"}`
   - Response: `{"reply": "..."}`
 
 ## Deploy

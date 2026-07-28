@@ -19,14 +19,20 @@ async def call_gemini(
     model: str,
     temperature: float,
     max_output_tokens: int,
+    *,
+    context: str | None = None,
 ) -> str:
     client = genai.Client(api_key=api_key)
-    logger.info("gemini_call_start", model=model)
+    logger.info("gemini_call_start", model=model, has_context=context is not None)
+
+    contents = message
+    if context:
+        contents = f"{context}\n\nMensaje del usuario: {message}"
 
     try:
         response = await client.aio.models.generate_content(
             model=model,
-            contents=message,
+            contents=contents,
             config=types.GenerateContentConfig(
                 system_instruction=SYSTEM_PROMPT,
                 temperature=temperature,
