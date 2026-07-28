@@ -7,7 +7,7 @@ from fastapi import APIRouter, Depends, Request
 from pydantic import BaseModel
 
 from app.actions.audit import log_action_executed
-from app.actions.handlers import add_journal_entry, create_watering_schedule
+import app.actions.handlers as handlers_mod
 from app.actions.models import payload_digest
 from app.actions.registry import resolve_action
 from app.actions.tokens import TokenAuthError, verify_confirm_token
@@ -42,13 +42,7 @@ class InvalidActionError(Exception):
     pass
 
 
-_HANDLER_MAP = {
-    "create_watering_schedule": create_watering_schedule,
-    "add_journal_entry": add_journal_entry,
-}
-
-
-@actions_router.post("/actions/execute")
+@actions_router.post("/actions/execute", status_code=201)
 async def execute_action(
     body: ExecuteRequest,
     request: Request,
@@ -73,7 +67,9 @@ async def execute_action(
     except TokenAuthError:
         raise AuthError(AUTH_ERROR_MESSAGE) from None
 
-    handler = _HANDLER_MAP[body.action_type]
+    handler = getattr(handlers_mod, body.action_type, None)
+    if handler is None:
+        raise InvalidActionError
 
     client = await build_user_client(
         settings.supabase_url,

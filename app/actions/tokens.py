@@ -34,8 +34,8 @@ class InvalidActionError(Exception):
     pass
 
 
-def issue_confirm_token(
-    _action_type: str,
+def issue_confirm_token(  # noqa: PLR0913, PLR0917
+    action_type: str,  # noqa: ARG001
     plant_id: str,
     payload: dict,
     user_sub: str,
@@ -60,9 +60,9 @@ def issue_confirm_token(
     return token
 
 
-def verify_confirm_token(
+def verify_confirm_token(  # noqa: PLR0913, PLR0917
     token: str,
-    _action_type: str,
+    action_type: str,  # noqa: ARG001
     plant_id: str,
     payload: dict,
     user_sub: str,

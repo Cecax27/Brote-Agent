@@ -66,15 +66,11 @@ class TestCreateWateringSchedulePayload:
 
     def test_rejects_zero_frequency(self) -> None:
         with pytest.raises(ValidationError):
-            CreateWateringSchedulePayload(
-                frequency_days=0, next_due_at="2025-06-01T00:00:00Z"
-            )
+            CreateWateringSchedulePayload(frequency_days=0, next_due_at="2025-06-01T00:00:00Z")
 
     def test_rejects_negative_frequency(self) -> None:
         with pytest.raises(ValidationError):
-            CreateWateringSchedulePayload(
-                frequency_days=-1, next_due_at="2025-06-01T00:00:00Z"
-            )
+            CreateWateringSchedulePayload(frequency_days=-1, next_due_at="2025-06-01T00:00:00Z")
 
 
 class TestAddJournalEntryPayload:

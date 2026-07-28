@@ -20,6 +20,7 @@ def settings() -> Settings:
         gemini_api_key="test-key",
         supabase_url="https://test.supabase.co",
         supabase_anon_key="test-anon-key",
+        action_signing_secret="test-signing-secret",  # noqa: S106
     )
 
 
@@ -71,5 +72,12 @@ def mock_supabase_context():
 @pytest.fixture
 def mock_supabase_client():
     patcher = patch("app.api.routes.build_user_client", new_callable=AsyncMock)
+    yield patcher.start()
+    patcher.stop()
+
+
+@pytest.fixture
+def mock_supabase_client_actions():
+    patcher = patch("app.actions.routes.build_user_client", new_callable=AsyncMock)
     yield patcher.start()
     patcher.stop()
