@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import base64
+import binascii
 import hashlib
 import hmac
 import secrets
@@ -34,7 +35,7 @@ class InvalidActionError(Exception):
 
 
 def issue_confirm_token(
-    action_type: str,
+    _action_type: str,
     plant_id: str,
     payload: dict,
     user_sub: str,
@@ -61,7 +62,7 @@ def issue_confirm_token(
 
 def verify_confirm_token(
     token: str,
-    action_type: str,
+    _action_type: str,
     plant_id: str,
     payload: dict,
     user_sub: str,
@@ -73,15 +74,15 @@ def verify_confirm_token(
         token_body, exp_str = token.rsplit(":", 1)
         exp = int(exp_str)
     except (ValueError, OverflowError):
-        raise TokenAuthError
+        raise TokenAuthError from None
 
     if exp < time.time():
         raise TokenAuthError
 
     try:
         decoded = base64.urlsafe_b64decode(token_body + "==")
-    except Exception:
-        raise TokenAuthError
+    except (ValueError, binascii.Error):
+        raise TokenAuthError from None
 
     nonce_bytes = decoded[:32]
     mac = decoded[32:]
@@ -89,7 +90,7 @@ def verify_confirm_token(
     try:
         nonce = nonce_bytes.decode()
     except UnicodeDecodeError:
-        raise TokenAuthError
+        raise TokenAuthError from None
 
     if nonce not in _nonce_store:
         raise TokenAuthError

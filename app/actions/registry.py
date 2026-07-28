@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from pydantic import BaseModel
+from pydantic import BaseModel  # noqa: TC002
 
 from app.actions.models import PAYLOAD_MODELS, TABLE_MAP
 

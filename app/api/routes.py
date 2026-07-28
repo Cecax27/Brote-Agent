@@ -1,11 +1,9 @@
-import json
 import time
-from typing import Any, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from fastapi import APIRouter, Depends, Request
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ValidationError
 
-from app.actions.models import payload_digest
 from app.actions.registry import resolve_action
 from app.actions.tokens import issue_confirm_token
 from app.agent.loop import UpstreamError, call_gemini
@@ -19,6 +17,8 @@ if TYPE_CHECKING:
 
 logger = get_logger(__name__)
 router = APIRouter()
+
+_UPSTREAM_MSG = "El servicio de IA no respondió. Inténtalo de nuevo en un momento."
 
 
 class ChatRequest(BaseModel):
@@ -77,7 +77,7 @@ async def health() -> HealthResponse:
 async def chat(
     body: ChatRequest,
     request: Request,
-    user: UserIdentity = Depends(get_authenticated_user),
+    user: UserIdentity = Depends(get_authenticated_user),  # noqa: B008, FAST002
 ) -> ChatResponse:
     settings: "Settings" = request.app.state.settings
     start = time.monotonic()
@@ -108,7 +108,7 @@ async def chat(
 
     if not isinstance(result, dict):
         logger.error("gemini_unexpected_result_type", type=type(result).__name__)
-        raise UpstreamError("El servicio de IA no respondió. Inténtalo de nuevo en un momento.")
+        raise UpstreamError(_UPSTREAM_MSG)
 
     reply = str(result.get("reply", ""))
     proposed_action = _build_proposed_action(result, body.plant_id, user.sub, settings)
@@ -145,7 +145,7 @@ def _build_proposed_action(
 
     try:
         payload_model = spec.payload_model(**raw.get("payload", {}))
-    except Exception:
+    except ValidationError:
         return None
 
     action_plant_id = str(raw.get("plant_id", ""))

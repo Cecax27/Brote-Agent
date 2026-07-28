@@ -1,6 +1,6 @@
 import os
 from collections.abc import AsyncGenerator
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, patch
 
 os.environ.setdefault("GEMINI_API_KEY", "test-key")
 os.environ.setdefault("SUPABASE_URL", "https://test.supabase.co")
@@ -12,7 +12,6 @@ from starlette.testclient import TestClient
 
 from app.config.settings import Settings
 from app.main import create_app
-from app.supabase.context import ContextBundle
 
 
 @pytest.fixture

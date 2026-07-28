@@ -1,14 +1,15 @@
-import os
 import time
-from unittest.mock import patch
 
 import pytest
+from pydantic import ValidationError
 
-from app.actions.models import AddJournalEntryPayload, CreateWateringSchedulePayload
-from app.actions.models import payload_digest
+from app.actions.models import (
+    AddJournalEntryPayload,
+    CreateWateringSchedulePayload,
+    payload_digest,
+)
 from app.actions.registry import resolve_action
 from app.actions.tokens import (
-    InvalidActionError,
     TokenAuthError,
     _nonce_store,
     issue_confirm_token,
@@ -64,11 +65,13 @@ class TestCreateWateringSchedulePayload:
         assert p.frequency_days == 7
 
     def test_rejects_zero_frequency(self) -> None:
-        with pytest.raises(Exception):
-            CreateWateringSchedulePayload(frequency_days=0, next_due_at="2025-06-01T00:00:00Z")
+        with pytest.raises(ValidationError):
+            CreateWateringSchedulePayload(
+                frequency_days=0, next_due_at="2025-06-01T00:00:00Z"
+            )
 
     def test_rejects_negative_frequency(self) -> None:
-        with pytest.raises(Exception):
+        with pytest.raises(ValidationError):
             CreateWateringSchedulePayload(
                 frequency_days=-1, next_due_at="2025-06-01T00:00:00Z"
             )
@@ -80,7 +83,7 @@ class TestAddJournalEntryPayload:
         assert p.content == "Riega cada 7 días"
 
     def test_rejects_empty_content(self) -> None:
-        with pytest.raises(Exception):
+        with pytest.raises(ValidationError):
             AddJournalEntryPayload(content="")
 
 
@@ -164,7 +167,12 @@ class TestConfirmToken:
             "create_watering_schedule", "plant-1", payload, "user-1", SIGNING_SECRET
         )
         verify_confirm_token(
-            token, "create_watering_schedule", "plant-1", payload, "user-1", SIGNING_SECRET
+            token,
+            "create_watering_schedule",
+            "plant-1",
+            payload,
+            "user-1",
+            SIGNING_SECRET,
         )
         with pytest.raises(TokenAuthError):
             verify_confirm_token(
@@ -176,13 +184,12 @@ class TestConfirmToken:
                 SIGNING_SECRET,
             )
 
-    def test_payload_altered_raises_invalid_action(self) -> None:
+    def test_payload_altered_raises_token_auth(self) -> None:
         payload = {"frequency_days": 7, "next_due_at": "2025-06-01T00:00:00Z"}
         token = issue_confirm_token(
             "create_watering_schedule", "plant-1", payload, "user-1", SIGNING_SECRET
         )
         altered = {"frequency_days": 7, "next_due_at": "2025-06-02T00:00:00Z"}
-        # Payload hash won't match → TokenAuthError (bad signature)
         with pytest.raises(TokenAuthError):
             verify_confirm_token(
                 token,

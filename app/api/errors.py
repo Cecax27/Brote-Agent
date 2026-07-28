@@ -1,6 +1,7 @@
 from fastapi import Request
 from fastapi.responses import JSONResponse
 
+from app.actions.routes import InvalidActionError
 from app.agent.loop import UpstreamError
 from app.auth.tokens import AuthError
 from app.logging import get_logger
@@ -19,6 +20,21 @@ async def auth_exception_handler(request: Request, exc: AuthError) -> JSONRespon
             "error": {
                 "code": "UNAUTHORIZED",
                 "message": str(exc),
+            },
+        },
+    )
+
+
+async def invalid_action_exception_handler(
+    request: Request, exc: InvalidActionError
+) -> JSONResponse:
+    logger.warning("invalid_action", path=request.url.path)
+    return JSONResponse(
+        status_code=400,
+        content={
+            "error": {
+                "code": "INVALID_ACTION",
+                "message": "La acción solicitada no está permitida.",
             },
         },
     )

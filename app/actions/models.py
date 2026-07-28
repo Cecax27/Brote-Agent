@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import json
 from typing import Any
 
@@ -29,7 +30,5 @@ TABLE_MAP: dict[str, str] = {
 
 
 def payload_digest(payload: dict[str, Any], plant_id: str) -> str:
-    import hashlib
-
     canonical = json.dumps({"payload": payload, "plant_id": plant_id}, sort_keys=True)
     return hashlib.sha256(canonical.encode()).hexdigest()[:16]
