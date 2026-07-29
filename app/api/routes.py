@@ -12,6 +12,7 @@ from app.auth.dependency import UserIdentity, get_authenticated_user
 from app.logging import get_logger
 from app.supabase.client import build_user_client
 from app.supabase.context import build_plant_context, format_context_for_gemini
+from app.vision.models import ImageRef, VisionRequest
 
 if TYPE_CHECKING:
     from app.config.settings import Settings
@@ -30,6 +31,7 @@ class ChatRequest(BaseModel):
 class ChatResponse(BaseModel):
     reply: str
     proposed_action: ProposedActionResponse | None = None
+    vision_request: VisionRequest | None = None
 
 
 class HealthResponse(BaseModel):
@@ -84,6 +86,26 @@ ACTION_RESPONSE_SCHEMA: dict[str, Any] = {
             },
             "required": ["action_type", "plant_id", "title", "summary_es", "payload"],
         },
+        "vision_request": {
+            "type": "OBJECT",
+            "nullable": True,
+            "properties": {
+                "reason_es": {"type": "STRING"},
+                "suggested_ref": {
+                    "type": "OBJECT",
+                    "properties": {
+                        "kind": {
+                            "type": "STRING",
+                            "enum": ["journal_entry", "plant_latest"],
+                        },
+                        "journal_entry_id": {"type": "STRING", "nullable": True},
+                        "plant_id": {"type": "STRING", "nullable": True},
+                    },
+                    "required": ["kind"],
+                },
+            },
+            "required": ["reason_es", "suggested_ref"],
+        },
     },
     "required": ["reply"],
 }
@@ -133,6 +155,7 @@ async def chat(
 
     reply = str(result.get("reply", ""))
     proposed_action = _build_proposed_action(result, body.plant_id, user.sub, settings)
+    vision_request = _build_vision_request(result, body.plant_id)
 
     elapsed_ms = int((time.monotonic() - start) * 1000)
     logger.info(
@@ -143,7 +166,7 @@ async def chat(
         duration_ms=elapsed_ms,
         user=user.sub,
     )
-    return ChatResponse(reply=reply, proposed_action=proposed_action)
+    return ChatResponse(reply=reply, proposed_action=proposed_action, vision_request=vision_request)
 
 
 def _build_proposed_action(
@@ -196,3 +219,45 @@ def _build_proposed_action(
         payload=payload_dict,
         confirm_token=token,
     )
+
+
+def _build_vision_request(
+    result: dict[str, Any],
+    plant_id: str | None,
+) -> VisionRequest | None:
+    raw = result.get("vision_request")
+    if raw is None:
+        return None
+
+    if not isinstance(raw, dict):
+        return None
+
+    suggested_raw = raw.get("suggested_ref")
+    if not isinstance(suggested_raw, dict):
+        return None
+
+    kind = str(suggested_raw.get("kind", ""))
+    if kind not in ("journal_entry", "plant_latest"):
+        return None
+
+    reason_es = str(raw.get("reason_es", ""))
+
+    if kind == "journal_entry":
+        journal_entry_id = str(suggested_raw.get("journal_entry_id", "") or "")
+        if not journal_entry_id:
+            return None
+        suggested_ref = ImageRef(kind=kind, journal_entry_id=journal_entry_id)
+    else:
+        ref_plant_id = str(suggested_raw.get("plant_id", "") or "")
+        if not ref_plant_id:
+            return None
+        if plant_id is not None and ref_plant_id != plant_id:
+            logger.warning(
+                "vision_request_plant_mismatch",
+                vision_plant=ref_plant_id,
+                request_plant=plant_id,
+            )
+            return None
+        suggested_ref = ImageRef(kind=kind, plant_id=ref_plant_id)
+
+    return VisionRequest(reason_es=reason_es, suggested_ref=suggested_ref)
