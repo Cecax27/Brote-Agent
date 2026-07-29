@@ -29,16 +29,19 @@ Main conversation endpoint. Sends a user message to the AI and returns its Spani
 ```json
 {
   "message": "string (required, 1–2000 characters)",
-  "plant_id": "string | null (optional)"
+  "plant_id": "string | null (optional)",
+  "conversation_id": "uuid | null (optional)"
 }
 ```
 
 - `plant_id`: when set, Flora gets deep context for that specific plant (recent journal entries, watering history, light readings, etc.) so her reply is personalized. When absent, she gets a light inventory of all the user's plants — enough to prioritize "what needs attention today."
+- `conversation_id`: when set, the message belongs to that ongoing conversation — the agent loads recent history into the context window so Flora remembers what was said. When absent, the agent **auto-creates** a new conversation and returns its `conversation_id` in the response (the forgiving "just chat" path).
 
 **Response `200`:**
 
 ```json
 {
+  "conversation_id": "uuid (always present; the id of the conversation this message belongs to)",
   "reply": "string",
   "proposed_action": {
     "action_type": "create_watering_schedule | add_journal_entry",
@@ -127,6 +130,114 @@ All fields must match the `proposed_action` object returned by `/chat` exactly. 
 ### Audit logging
 
 Every executed write emits a structured JSON log event to stdout (captured by Cloud Run logging) with: `action_type`, `table`, `plant_id`, `action_id`, `user`, `status`, `duration_ms`, `payload_digest`. Journal entry `content` text is **never** logged — only a truncated SHA-256 digest.
+
+---
+
+### History budget rule
+
+Before each `/chat` turn, the agent loads at most `history_max_messages` (default 20) prior turns of the active conversation, oldest→newest. The combined history text block is further capped at `history_max_chars` (default 6000) — when exceeded, the oldest turns are trimmed first so the most recent context always fits. Both knobs are configurable via settings.
+
+### Auto-title rule
+
+When a conversation is created without an explicit `title` (auto-create on `/chat` or `POST /conversations` with no title), the first user message is used to derive a short Spanish title: truncated at the last whole word ≤ `conversation_title_max_chars` (default 48), with a trailing `…` only when truncation occurred. The title is set exactly once — later turns do not regenerate it. An explicit title provided via `POST /conversations` is never overwritten.
+
+### Plant-scoping rule
+
+A conversation is optionally linked to a single `plant_id`:
+- On creation: set from `POST /conversations` or the first plant-bearing `/chat`.
+- Once a conversation has a non-null `plant_id`, a subsequent `/chat` carrying a *different* non-null `plant_id` returns `400 CONVERSATION_PLANT_MISMATCH` — a conversation belongs to at most one plant.
+- When a conversation has a `plant_id`, Flora loads 002 deep context for **that** plant on every turn, even if the app omits `plant_id` from the request.
+- A conversation with a null `plant_id` is scoped on its first plant-bearing `/chat` and locked thereafter.
+
+### Persistence model
+
+Every `/chat` turn writes two `ai_messages` rows (user + assistant) through the user-scoped Supabase client with RLS ownership. The user message is persisted **before** the Gemini call so it survives a 502 failure. On Gemini success the assistant reply is persisted and `ai_conversations.updated_at` is bumped. `proposed_action` payloads and `vision_request` asks are **not** persisted as history text — they are per-turn, ephemeral extras. The `ai_messages.content` column has a database `CHECK (char_length BETWEEN 1 AND 4000)`; assistant replies are defensively truncated to 4000 chars before insert.
+
+---
+
+## `POST /conversations`
+
+Create a new conversation. Optionally scope it to a plant and provide a title.
+
+**Headers:**
+- `Authorization: Bearer <supabase_access_token>` (required)
+
+**Request:**
+
+```json
+{
+  "plant_id": "uuid | null (optional)",
+  "title": "string | null (optional, ≤ 200 chars)"
+}
+```
+
+**Response `201`:**
+
+```json
+{
+  "conversation_id": "uuid"
+}
+```
+
+The created conversation's `user_id` is set to the authenticated user (`user.sub` from the verified token). If `title` is omitted, the conversation gets the default title `"Conversación con Flora"` — it will be auto-titled from the first user message on the next `/chat`.
+
+---
+
+## `GET /conversations`
+
+List the authenticated user's conversations.
+
+**Headers:**
+- `Authorization: Bearer <supabase_access_token>` (required)
+
+**Response `200`:**
+
+```json
+{
+  "conversations": [
+    {
+      "conversation_id": "uuid",
+      "title": "string",
+      "plant_id": "uuid | null",
+      "updated_at": "iso8601",
+      "created_at": "iso8601"
+    }
+  ]
+}
+```
+
+- Ordered by `updated_at` descending (most recently active first).
+- Capped at `conversations_max_results` (default 50).
+- RLS-scoped: only returns the caller's own conversations. An empty garden returns `200 {"conversations": []}`.
+
+---
+
+## `GET /conversations/{conversation_id}/messages`
+
+Get the full message list for a conversation.
+
+**Headers:**
+- `Authorization: Bearer <supabase_access_token>` (required)
+
+**Response `200`:**
+
+```json
+{
+  "conversation_id": "uuid",
+  "messages": [
+    {
+      "role": "user | assistant",
+      "content": "string",
+      "created_at": "iso8601",
+      "photo_url": "string | null"
+    }
+  ]
+}
+```
+
+- Oldest→newest order.
+- `photo_url` is always `null` in V1.0 (the agent writes only text turns).
+- A `conversation_id` the caller doesn't own (RLS denies) returns `404 CONVERSATION_NOT_FOUND`.
 
 ---
 
@@ -270,10 +381,12 @@ All images are resized **before** reaching the AI model. The original bytes are 
 
 | HTTP status | `code`            | Meaning                                      |
 |-------------|-------------------|----------------------------------------------|
-| 400         | `INVALID_ACTION`  | Action not in the writable-surface allowlist |
-| 400         | `INVALID_IMAGE`   | Image is unprocessable, wrong format, or too large |
-| 401         | `UNAUTHORIZED`    | Missing, malformed, expired, or invalid token |
-| 404         | `IMAGE_NOT_FOUND` | Stored image reference not found under RLS    |
-| 422         | `VALIDATION_ERROR`| Invalid or missing request body               |
-| 502         | `UPSTREAM_ERROR`  | Gemini or Supabase API returned an error      |
-| 500         | `INTERNAL_ERROR`  | Unexpected server error                       |
+| 400         | `INVALID_ACTION`                | Action not in the writable-surface allowlist |
+| 400         | `INVALID_IMAGE`                 | Image is unprocessable, wrong format, or too large |
+| 400         | `CONVERSATION_PLANT_MISMATCH`   | Conversation already belongs to a different plant |
+| 401         | `UNAUTHORIZED`                  | Missing, malformed, expired, or invalid token |
+| 404         | `IMAGE_NOT_FOUND`               | Stored image reference not found under RLS |
+| 404         | `CONVERSATION_NOT_FOUND`        | Conversation does not exist or belongs to another user |
+| 422         | `VALIDATION_ERROR`              | Invalid or missing request body |
+| 502         | `UPSTREAM_ERROR`                | Gemini or Supabase API returned an error |
+| 500         | `INTERNAL_ERROR`                | Unexpected server error |
