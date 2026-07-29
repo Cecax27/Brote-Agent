@@ -4,6 +4,7 @@ from typing import TYPE_CHECKING, Any
 from fastapi import APIRouter, Depends, Request
 from pydantic import BaseModel, Field, ValidationError
 
+from app.actions.models import ProposedActionResponse
 from app.actions.registry import resolve_action
 from app.actions.tokens import issue_confirm_token
 from app.agent.loop import UpstreamError, call_gemini
@@ -24,15 +25,6 @@ _UPSTREAM_MSG = "El servicio de IA no respondió. Inténtalo de nuevo en un mome
 class ChatRequest(BaseModel):
     message: str = Field(min_length=1, max_length=2000)
     plant_id: str | None = Field(default=None)
-
-
-class ProposedActionResponse(BaseModel):
-    action_type: str
-    plant_id: str
-    title: str
-    summary_es: str
-    payload: dict[str, Any]
-    confirm_token: str
 
 
 class ChatResponse(BaseModel):

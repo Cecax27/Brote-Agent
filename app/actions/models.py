@@ -18,6 +18,15 @@ class AddJournalEntryPayload(BaseModel):
     content: str = Field(min_length=1, max_length=2000)
 
 
+class ProposedActionResponse(BaseModel):
+    action_type: str
+    plant_id: str
+    title: str
+    summary_es: str
+    payload: dict[str, Any]
+    confirm_token: str
+
+
 PAYLOAD_MODELS: dict[str, type[BaseModel]] = {
     "create_watering_schedule": CreateWateringSchedulePayload,
     "add_journal_entry": AddJournalEntryPayload,
