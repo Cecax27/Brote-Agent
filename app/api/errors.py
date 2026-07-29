@@ -4,6 +4,10 @@ from fastapi.responses import JSONResponse
 from app.actions.routes import InvalidActionError
 from app.agent.loop import UpstreamError
 from app.auth.tokens import AuthError
+from app.conversations.store import (
+    ConversationNotFoundError,
+    ConversationPlantMismatchError,
+)
 from app.logging import get_logger
 from app.vision.images import InvalidImageError
 from app.vision.retrieval import ImageNotFoundError
@@ -106,7 +110,7 @@ async def invalid_image_exception_handler(request: Request, exc: InvalidImageErr
 
 async def image_not_found_exception_handler(
     request: Request,
-    exc: ImageNotFoundError,  # noqa: ARG001
+    exc: ImageNotFoundError,
 ) -> JSONResponse:
     logger.warning("image_not_found", path=request.url.path)
     return JSONResponse(
@@ -115,6 +119,38 @@ async def image_not_found_exception_handler(
             "error": {
                 "code": "IMAGE_NOT_FOUND",
                 "message": "La foto solicitada no se encontró.",
+            },
+        },
+    )
+
+
+async def conversation_not_found_exception_handler(
+    request: Request,
+    exc: ConversationNotFoundError,
+) -> JSONResponse:
+    logger.warning("conversation_not_found", path=request.url.path)
+    return JSONResponse(
+        status_code=404,
+        content={
+            "error": {
+                "code": "CONVERSATION_NOT_FOUND",
+                "message": "La conversación no existe o no te pertenece.",
+            },
+        },
+    )
+
+
+async def conversation_plant_mismatch_exception_handler(
+    request: Request,
+    exc: ConversationPlantMismatchError,
+) -> JSONResponse:
+    logger.warning("conversation_plant_mismatch", path=request.url.path)
+    return JSONResponse(
+        status_code=400,
+        content={
+            "error": {
+                "code": "CONVERSATION_PLANT_MISMATCH",
+                "message": "Esta conversación ya pertenece a otra planta.",
             },
         },
     )

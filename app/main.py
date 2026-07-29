@@ -8,6 +8,8 @@ from app.actions.routes import InvalidActionError, actions_router
 from app.agent.loop import UpstreamError
 from app.api.errors import (
     auth_exception_handler,
+    conversation_not_found_exception_handler,
+    conversation_plant_mismatch_exception_handler,
     generic_exception_handler,
     image_not_found_exception_handler,
     invalid_action_exception_handler,
@@ -18,6 +20,11 @@ from app.api.errors import (
 from app.api.routes import router
 from app.auth.tokens import AuthError
 from app.config.settings import Settings
+from app.conversations.routes import router as conversations_router
+from app.conversations.store import (
+    ConversationNotFoundError,
+    ConversationPlantMismatchError,
+)
 from app.logging import configure_logging, get_logger
 from app.vision.images import InvalidImageError
 from app.vision.retrieval import ImageNotFoundError
@@ -50,11 +57,14 @@ def create_app() -> FastAPI:
     app.add_exception_handler(ImageNotFoundError, image_not_found_exception_handler)
     app.add_exception_handler(UpstreamError, upstream_exception_handler)
     app.add_exception_handler(RequestValidationError, validation_exception_handler)
+    app.add_exception_handler(ConversationNotFoundError, conversation_not_found_exception_handler)
+    app.add_exception_handler(ConversationPlantMismatchError, conversation_plant_mismatch_exception_handler)
     app.add_exception_handler(Exception, generic_exception_handler)
 
     app.include_router(router)
     app.include_router(actions_router)
     app.include_router(vision_router)
+    app.include_router(conversations_router)
 
     return app
 
