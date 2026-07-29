@@ -27,3 +27,8 @@ class Settings(BaseSettings):
     vision_max_dimension: int = 1024
     vision_jpeg_quality: int = 85
     vision_allowed_mime: list[str] = ["image/jpeg", "image/png", "image/webp"]
+
+    history_max_messages: int = 20
+    history_max_chars: int = 6000
+    conversation_title_max_chars: int = 48
+    conversations_max_results: int = 50

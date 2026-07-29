@@ -47,6 +47,14 @@ brote-agent/
 │   │   ├── client.py        # build_user_client(url, access_token) → AsyncClient
 │   │   ├── schema.py        # TABLE_* / COL_* name constants
 │   │   └── context.py       # build_plant_context → ContextBundle
+│   ├── conversations/         # Conversation persistence — RLS-scoped store, history builder, routes
+│   │   ├── __init__.py
+│   │   ├── models.py           # Conversation, Message, request/response Pydantic models
+│   │   ├── store.py            # create_conversation, get_conversation, append_message, fetch_history, etc.
+│   │   ├── history.py          # format_history_block, trim_to_budget (pure)
+│   │   ├── titles.py           # derive_title (pure, Spanish-safe truncation)
+│   │   ├── audit.py            # log_conversation_event() → structlog (scalar-only)
+│   │   └── routes.py           # POST /conversations, GET /conversations, GET /conversations/{id}/messages
 │   ├── vision/               # Image analysis — retrieve from Supabase or inline, resize, Gemini vision
 │   │   ├── __init__.py
 │   │   ├── images.py         # validate_image_bytes, resize_image (Pillow)
@@ -62,6 +70,11 @@ brote-agent/
 │   ├── test_chat.py         # /chat with mocked Gemini; /health smoke
 │   ├── test_auth.py         # 401 paths (missing, malformed, expired, bad sig)
 │   ├── test_chat_context.py # context injection, RLS deny, minimization, 502
+│   ├── test_chat_conversation.py # /chat + conversation persistence: auto-create, history, 404, 400, truncation
+│   ├── test_conversations_store.py # RLS-scoped store: insert, append, history, list, get
+│   ├── test_conversations_history.py # format_history_block, trim_to_budget
+│   ├── test_conversations_titles.py # derive_title word-boundary, ellipsis
+│   ├── test_conversations_routes.py # POST/GET /conversations, GET .../messages
 │   └── test_actions_registry.py  # action model, registry, token lifecycle tests
 ├── docs/
 │   └── api-contract.md      # Routes, request/response JSON, error envelope
@@ -171,7 +184,7 @@ These are V1.0-scoped limits — features may lift individual items as they land
 - ~~No auth~~ — lifted by 002 (JWT verification).
 - ~~No writes~~ — lifted by 003 (propose→confirm→execute flow).
 - No streaming (single-shot responses).
-- No conversation persistence.
+- ~~No conversation persistence~~ — lifted by 005.
 - ~~No image analysis~~ — lifted by 004.
 - No web search.
 - Spanish-only AI responses.
