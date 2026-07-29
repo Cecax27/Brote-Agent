@@ -98,6 +98,17 @@ What: The agent can search the internet to answer with current, sourced informat
 - [ ] Rate limiting and cost controls — avoid runaway search loops
 - [ ] Trustworthiness — prefer reputable sources, never invent links, say so when info is missing
 
+### 008-vision-conversation-link
+What: Link vision analysis back into the ongoing conversation thread. `/vision/*` endpoints accept an optional `conversation_id` — when present, the diagnosis exchange is persisted as `ai_messages` rows (reusing 005's infrastructure) so Flora remembers what she saw. When absent, the call stays stateless (004 behaviour unchanged).
+- [ ] `format_history_block` labels photo turns (`[Foto]` prefix) so resumed threads show image turns
+- [ ] `/vision/analyze-stored` accepts optional `conversation_id`; persists user + assistant rows with `photo_url` on the user row
+- [ ] `/vision/analyze-upload` accepts optional `conversation_id` (multipart form); persists with `photo_url=null` (inline image is transient)
+- [ ] History injection on threaded vision turns (reuses 005's `fetch_history` + `trim_to_budget`)
+- [ ] Plant scoping, 404 `CONVERSATION_NOT_FOUND`, 400 `CONVERSATION_PLANT_MISMATCH` on `/vision/*` when threaded (reuse from 005)
+- [ ] `VisionAnalyzeResponse` gains optional `conversation_id` field (null when stateless)
+- [ ] Audit gains `conversation_id` scalar (no content/vision text)
+- [ ] Dual mode: stateless when `conversation_id` absent (004 regression), threaded when present
+
 ## Non-Goals (V1.0)
 
 Explicitly out of scope for the first version. Keep these out of the codebase unless revisited.
