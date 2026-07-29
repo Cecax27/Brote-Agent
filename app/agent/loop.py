@@ -53,7 +53,6 @@ async def call_gemini(
         logger.exception("gemini_call_failed", model=model)
         raise UpstreamError(UPSTREAM_ERROR_MESSAGE) from exc
 
-
     content = (response.text or "").strip()
 
     if response_schema is not None:

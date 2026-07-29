@@ -104,14 +104,14 @@ VISION_SUB_PROMPT = (
     "- Examina la planta en la foto con atención: hojas, tallos, sustrato, color, "
     "textura, presencia de manchas, plagas visibles, signos de estrés hídrico, etc.\n"
     "- Si el mensaje del usuario pregunta sobre la salud de la planta, elige "
-    "kind=\"health\" y proporciona un diagnosis en español. Si pregunta por la "
-    "especie, elige kind=\"identify\" y proporciona possible_species. Si pregunta "
-    "ambas cosas, elige kind=\"mixed\".\n"
+    'kind="health" y proporciona un diagnosis en español. Si pregunta por la '
+    'especie, elige kind="identify" y proporciona possible_species. Si pregunta '
+    'ambas cosas, elige kind="mixed".\n'
     "- Sé honesta sobre tu nivel de certeza. Usa el campo confidence para indicar "
     "si tu diagnóstico o identificación es de confianza alta, media o baja.\n"
     "- Si no tienes suficiente información para un diagnóstico seguro "
     "(por ejemplo, necesitas saber hace cuánto se regó, cuánta luz recibe, o "
-    "cuándo empezaron los síntomas), pon confidence=\"baja\" Y proporciona un "
+    'cuándo empezaron los síntomas), pon confidence="baja" Y proporciona un '
     "needs_more_info.question_es con una pregunta clara en español. No inventes "
     "un diagnóstico cuando no estés segura — prefieres preguntar antes que "
     "equivocarte.\n"
@@ -121,13 +121,13 @@ VISION_SUB_PROMPT = (
     "certeza.\n"
     "- Si la imagen claramente NO es una planta ni tiene relación con plantas "
     "(por ejemplo, un recibo, un selfie, una mascota, una captura de pantalla de "
-    "otra app), elige kind=\"declined\", NO des ningún diagnosis ni "
+    'otra app), elige kind="declined", NO des ningún diagnosis ni '
     "possible_species, y tu reply debe rechazar amablemente el análisis "
     "recordando que solo ayudas con temas de plantas. Di algo como '¡Vaya! "
     "Esto no parece una planta. Yo solo sé de plantas. ¿Tienes alguna planta "
     "de la que quieras hablarme?'.\n"
     "- Si la imagen es de una planta pero está borrosa, demasiado lejos, o no se "
-    "distingue bien, pon confidence=\"baja\" y pide una foto más clara en "
+    'distingue bien, pon confidence="baja" y pide una foto más clara en '
     "needs_more_info.question_es.\n"
     "- Si el contexto de la planta está disponible, úsalo para enriquecer tu "
     "análisis: comprueba el historial de riego, luz, abonados o problemas "

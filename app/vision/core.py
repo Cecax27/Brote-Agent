@@ -5,8 +5,8 @@ import json
 from google import genai
 from google.genai import types
 
-from app.agent.prompts import VISION_SUB_PROMPT, SYSTEM_PROMPT
-from app.config.settings import Settings
+from app.agent.prompts import SYSTEM_PROMPT, VISION_SUB_PROMPT
+from app.config.settings import Settings  # noqa: TC001
 from app.logging import get_logger
 from app.vision.models import VISION_RESPONSE_SCHEMA
 
@@ -41,7 +41,7 @@ async def analyze_image_with_gemini(
         text_parts.append(context_str)
     text_parts.append(message)
 
-    contents = [image_part] + text_parts  # type: ignore[assignment]
+    contents = [image_part, *text_parts]  # type: ignore[assignment]
 
     system_prompt = _build_vision_system_prompt()
 
@@ -68,7 +68,7 @@ async def analyze_image_with_gemini(
             raise UpstreamError(UPSTREAM_ERROR_MESSAGE)
     except json.JSONDecodeError:
         logger.exception("vision_gemini_json_parse_failed")
-        raise UpstreamError(UPSTREAM_ERROR_MESSAGE)
+        raise UpstreamError(UPSTREAM_ERROR_MESSAGE) from None
 
     logger.info("vision_gemini_call_done", model=model)
     return parsed

@@ -15,14 +15,14 @@ from app.vision.audit import log_vision_call
 from app.vision.core import UpstreamError, analyze_image_with_gemini
 from app.vision.images import (
     InvalidImageError,
+    resize_image,
     sniff_allowed_mime,
     validate_image_bytes,
-    resize_image,
 )
 from app.vision.models import (
+    VisionAnalysis,
     VisionAnalyzeRequest,
     VisionAnalyzeResponse,
-    VisionAnalysis,
 )
 from app.vision.retrieval import (
     ImageNotFoundError,
@@ -37,9 +37,13 @@ if TYPE_CHECKING:
 logger = get_logger(__name__)
 router = APIRouter(prefix="/vision")
 
+_INVALID_IMAGE_REF = "Referencia de imagen no válida."
+_INVALID_IMAGE_SIZE = "La imagen es demasiado grande."
+_VISION_PROCESS_FAILED = "La imagen no se pudo procesar. Inténtalo de nuevo en un momento."
+
 
 @router.post("/analyze-stored")
-async def analyze_stored(
+async def analyze_stored(  # noqa: C901, PLR0915
     body: VisionAnalyzeRequest,
     request: Request,
     user: UserIdentity = Depends(get_authenticated_user),  # noqa: B008, FAST002
@@ -59,20 +63,20 @@ async def analyze_stored(
     ref = body.image_ref
     if ref.kind == "journal_entry":
         if not ref.journal_entry_id:
-            raise ImageNotFoundError()
+            raise ImageNotFoundError
         resolved = await resolve_journal_photo(client, ref.journal_entry_id)
         source = "journal_entry"
     elif ref.kind == "plant_latest":
         plant_id = ref.plant_id or body.plant_id
         if not plant_id:
-            raise ImageNotFoundError()
+            raise ImageNotFoundError
         resolved = await resolve_plant_latest_photo(client, plant_id)
         source = "plant_latest"
     else:
-        raise InvalidImageError("Referencia de imagen no válida.")
+        raise InvalidImageError(_INVALID_IMAGE_REF)
 
     if resolved is None:
-        raise ImageNotFoundError()
+        raise ImageNotFoundError
 
     try:
         raw = await fetch_photo_bytes(resolved.url, settings)
@@ -88,9 +92,7 @@ async def analyze_stored(
         raise
     except Exception as exc:
         logger.exception("vision_stored_processing_failed")
-        raise UpstreamError(
-            "La imagen no se pudo procesar. Inténtalo de nuevo en un momento."
-        ) from exc
+        raise UpstreamError(_VISION_PROCESS_FAILED) from exc
 
     context_str: str | None = None
     effective_plant_id = body.plant_id or ref.plant_id
@@ -159,9 +161,9 @@ async def analyze_stored(
 async def analyze_upload(
     request: Request,
     user: UserIdentity = Depends(get_authenticated_user),  # noqa: B008, FAST002
-    image: UploadFile = File(...),  # noqa: B008
-    message: str = Form(...),
-    plant_id: str | None = Form(default=None),
+    image: UploadFile = File(...),  # noqa: B008, FAST002
+    message: str = Form(...),  # noqa: FAST002
+    plant_id: str | None = Form(default=None),  # noqa: FAST002
 ) -> VisionAnalyzeResponse:
     settings: "Settings" = request.app.state.settings
     start = time.monotonic()
@@ -170,7 +172,7 @@ async def analyze_upload(
     original_bytes = len(raw)
 
     if original_bytes > settings.vision_max_image_bytes:
-        raise InvalidImageError("La imagen es demasiado grande.")
+        raise InvalidImageError(_INVALID_IMAGE_SIZE)
 
     validate_image_bytes(raw, settings)
     mime_type = sniff_allowed_mime(raw, settings) or "image/jpeg"
@@ -244,7 +246,7 @@ async def analyze_upload(
     return VisionAnalyzeResponse(reply=reply, vision=vision, proposed_action=proposed_action)
 
 
-def _parse_vision_analysis(raw: Any) -> VisionAnalysis:
+def _parse_vision_analysis(raw: Any) -> VisionAnalysis:  # noqa: ANN401
     if isinstance(raw, dict):
         try:
             return VisionAnalysis(**raw)

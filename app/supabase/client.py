@@ -13,9 +13,7 @@ if TYPE_CHECKING:
 logger = get_logger(__name__)
 
 
-async def build_user_client(
-    url: str, anon_key: str, access_token: str
-) -> "AsyncClient":
+async def build_user_client(url: str, anon_key: str, access_token: str) -> "AsyncClient":
     try:
         client = await create_async_client(
             url,

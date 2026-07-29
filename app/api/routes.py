@@ -168,7 +168,7 @@ async def chat(
     return ChatResponse(reply=reply, proposed_action=proposed_action, vision_request=vision_request)
 
 
-def _build_vision_request(
+def _build_vision_request(  # noqa: PLR0911
     result: dict[str, Any],
     plant_id: str | None,
 ) -> VisionRequest | None:

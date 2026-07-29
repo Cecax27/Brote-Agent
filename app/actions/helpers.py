@@ -7,7 +7,7 @@ from pydantic import ValidationError
 from app.actions.models import ProposedActionResponse
 from app.actions.registry import resolve_action
 from app.actions.tokens import issue_confirm_token
-from app.config.settings import Settings
+from app.config.settings import Settings  # noqa: TC001
 from app.logging import get_logger
 
 logger = get_logger(__name__)

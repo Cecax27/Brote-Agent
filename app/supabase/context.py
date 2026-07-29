@@ -69,14 +69,10 @@ def _parse_iso_date(value: str | None) -> str | None:
     return value.split("T")[0] if "T" in value else value
 
 
-async def _fetch_light_context(
-    client: AsyncClient, max_plants: int
-) -> list[PlantSummary]:
+async def _fetch_light_context(client: AsyncClient, max_plants: int) -> list[PlantSummary]:
     result = (
         await client.table(s.TABLE_PLANTS)
-        .select(
-            f"{s.COL_ID}, {s.COL_NAME}, {s.COL_SPECIES}"
-        )
+        .select(f"{s.COL_ID}, {s.COL_NAME}, {s.COL_SPECIES}")
         .limit(max_plants)
         .execute()
     )
@@ -94,10 +90,7 @@ async def _fetch_light_context(
     if plants:
         schedule_result = (
             await client.table(s.TABLE_WATERING_SCHEDULES)
-            .select(
-                f"{s.COL_PLANT_ID}, {s.COL_LAST_WATERED_AT}, "
-                f"{s.COL_NEXT_DUE_AT}"
-            )
+            .select(f"{s.COL_PLANT_ID}, {s.COL_LAST_WATERED_AT}, {s.COL_NEXT_DUE_AT}")
             .eq(s.COL_ACTIVE, True)
             .execute()
         )
@@ -108,12 +101,8 @@ async def _fetch_light_context(
         for plant in plants:
             schedule = schedule_by_plant.get(plant.id)
             if schedule:
-                plant.last_watered_at = _parse_iso_date(
-                    schedule.get(s.COL_LAST_WATERED_AT)
-                )
-                plant.next_due_at = _parse_iso_date(
-                    schedule.get(s.COL_NEXT_DUE_AT)
-                )
+                plant.last_watered_at = _parse_iso_date(schedule.get(s.COL_LAST_WATERED_AT))
+                plant.next_due_at = _parse_iso_date(schedule.get(s.COL_NEXT_DUE_AT))
 
     return plants
 
@@ -123,9 +112,7 @@ async def _fetch_deep_context(
 ) -> DeepPlantContext:
     plant_result = (
         await client.table(s.TABLE_PLANTS)
-        .select(
-            f"{s.COL_ID}, {s.COL_NAME}, {s.COL_SPECIES}"
-        )
+        .select(f"{s.COL_ID}, {s.COL_NAME}, {s.COL_SPECIES}")
         .eq(s.COL_ID, plant_id)
         .limit(1)
         .execute()
@@ -144,8 +131,7 @@ async def _fetch_deep_context(
     schedule_result = (
         await client.table(s.TABLE_WATERING_SCHEDULES)
         .select(
-            f"{s.COL_FREQUENCY_DAYS}, {s.COL_LAST_WATERED_AT}, "
-            f"{s.COL_NEXT_DUE_AT}, {s.COL_ACTIVE}"
+            f"{s.COL_FREQUENCY_DAYS}, {s.COL_LAST_WATERED_AT}, {s.COL_NEXT_DUE_AT}, {s.COL_ACTIVE}"
         )
         .eq(s.COL_PLANT_ID, plant_id)
         .limit(1)
@@ -166,10 +152,7 @@ async def _fetch_deep_context(
     journal_entries: list[JournalEntry] = []
     journal_result = (
         await client.table(s.TABLE_JOURNAL_ENTRIES)
-        .select(
-            f"{s.COL_CREATED_AT}, {s.COL_TYPE}, {s.COL_CONTENT}, "
-            f"{s.COL_PHOTO_URL}"
-        )
+        .select(f"{s.COL_CREATED_AT}, {s.COL_TYPE}, {s.COL_CONTENT}, {s.COL_PHOTO_URL}")
         .eq(s.COL_PLANT_ID, plant_id)
         .order(s.COL_CREATED_AT, desc=True)
         .limit(max_entries)

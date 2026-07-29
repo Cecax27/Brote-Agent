@@ -28,7 +28,8 @@ async def auth_exception_handler(request: Request, exc: AuthError) -> JSONRespon
 
 
 async def invalid_action_exception_handler(
-    request: Request, exc: InvalidActionError
+    request: Request,
+    exc: InvalidActionError,  # noqa: ARG001
 ) -> JSONResponse:
     logger.warning("invalid_action", path=request.url.path)
     return JSONResponse(
@@ -90,9 +91,7 @@ async def generic_exception_handler(request: Request, exc: Exception) -> JSONRes
     )
 
 
-async def invalid_image_exception_handler(
-    request: Request, exc: InvalidImageError
-) -> JSONResponse:
+async def invalid_image_exception_handler(request: Request, exc: InvalidImageError) -> JSONResponse:
     logger.warning("invalid_image", path=request.url.path)
     return JSONResponse(
         status_code=400,
@@ -106,7 +105,8 @@ async def invalid_image_exception_handler(
 
 
 async def image_not_found_exception_handler(
-    request: Request, exc: ImageNotFoundError
+    request: Request,
+    exc: ImageNotFoundError,  # noqa: ARG001
 ) -> JSONResponse:
     logger.warning("image_not_found", path=request.url.path)
     return JSONResponse(

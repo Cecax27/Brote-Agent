@@ -5,7 +5,7 @@ from app.logging import get_logger
 logger = get_logger(__name__)
 
 
-def log_vision_call(
+def log_vision_call(  # noqa: PLR0913
     *,
     endpoint: str,
     source: str,

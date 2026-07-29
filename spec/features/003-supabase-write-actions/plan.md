@@ -115,8 +115,8 @@ Key flows (delta from 002):
 Settings added to `app/config/settings.py`:
 
 ```python
-action_signing_secret: str          # secret — Secret Manager in Cloud Run, .env in dev
-action_token_ttl_seconds: int = 300 # 5 min — matches a conversation confirm, not a session
+action_signing_secret: str  # secret — Secret Manager in Cloud Run, .env in dev
+action_token_ttl_seconds: int = 300  # 5 min — matches a conversation confirm, not a session
 ```
 
 Gemini structured output for proposals: `call_gemini` gains an optional `action_schema` (a JSON Schema describing the union of the two action payloads) and returns `(reply, proposed_action_raw | None)`. The route validates `proposed_action_raw` against the registry's Pydantic model **before** minting the `confirm_token` — tokens are never minted for unparseable or un-allowlisted proposals (in that case `proposed_action` is silently set to `null` and Flora's plain reply still ships, so the user is never blocked by a malformed proposal).

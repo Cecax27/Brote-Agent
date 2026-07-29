@@ -80,9 +80,9 @@ Settings added to `app/config/settings.py`:
 
 ```python
 supabase_url: str
-supabase_jwt_secret: str            # secret — Secret Manager in Cloud Run, .env in dev
+supabase_jwt_secret: str  # secret — Secret Manager in Cloud Run, .env in dev
 auth_jwt_audience: str = "authenticated"
-context_max_plants: int = 20        # light-mode cap
+context_max_plants: int = 20  # light-mode cap
 context_max_recent_entries: int = 10  # deep-mode cap per history type
 ```
 

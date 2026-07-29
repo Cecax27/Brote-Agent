@@ -4,7 +4,7 @@ from typing import Any, Literal
 
 from pydantic import BaseModel, Field
 
-from app.actions.models import ProposedActionResponse
+from app.actions.models import ProposedActionResponse  # noqa: TC001
 
 
 class ImageRef(BaseModel):

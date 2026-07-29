@@ -4,13 +4,17 @@ from io import BytesIO
 
 from PIL import Image, UnidentifiedImageError
 
-from app.config.settings import Settings
+from app.config.settings import Settings  # noqa: TC001
 
 _MIME_TO_FORMAT: dict[str, str] = {
     "image/jpeg": "JPEG",
     "image/png": "PNG",
     "image/webp": "WEBP",
 }
+
+_INVALID_IMAGE_SIZE = "La imagen es demasiado grande."
+_INVALID_IMAGE_PROCESS = "La imagen no se pudo procesar."
+_INVALID_IMAGE_FORMAT = "El formato de imagen no está permitido."
 
 
 class InvalidImageError(Exception):
@@ -30,30 +34,31 @@ def sniff_allowed_mime(raw: bytes, settings: Settings) -> str | None:
     return None
 
 
+def _decode_for_format_check(raw: bytes) -> str | None:
+    try:
+        img = Image.open(BytesIO(raw))
+    except (UnidentifiedImageError, OSError):
+        return None
+    else:
+        return img.format
+
+
 def validate_image_bytes(raw: bytes, settings: Settings) -> None:
     if len(raw) > settings.vision_max_image_bytes:
-        raise InvalidImageError("La imagen es demasiado grande.")
+        raise InvalidImageError(_INVALID_IMAGE_SIZE)
     try:
         img = Image.open(BytesIO(raw))
         img.verify()
-    except Exception:
-        raise InvalidImageError("La imagen no se pudo procesar.")  # noqa: B904
+    except (UnidentifiedImageError, OSError):
+        raise InvalidImageError(_INVALID_IMAGE_PROCESS) from None
 
-    # Pillow may close the file after verify(); reopen for format check
-    try:
-        img = Image.open(BytesIO(raw))
-        pil_format = img.format
-    except Exception:
-        raise InvalidImageError("La imagen no se pudo procesar.")  # noqa: B904
+    pil_format = _decode_for_format_check(raw)
+    if pil_format is None:
+        raise InvalidImageError(_INVALID_IMAGE_PROCESS) from None
 
-    allowed = False
-    for mime in settings.vision_allowed_mime:
-        if _MIME_TO_FORMAT.get(mime) == pil_format:
-            allowed = True
-            break
-
+    allowed = any(_MIME_TO_FORMAT.get(mime) == pil_format for mime in settings.vision_allowed_mime)
     if not allowed:
-        raise InvalidImageError("El formato de imagen no está permitido.")
+        raise InvalidImageError(_INVALID_IMAGE_FORMAT)
 
 
 def resize_image(raw: bytes, settings: Settings) -> bytes:

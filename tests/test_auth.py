@@ -3,7 +3,6 @@ from unittest.mock import AsyncMock
 import pytest
 from httpx import ASGITransport, AsyncClient
 
-from app.auth.tokens import AuthError
 from app.config.settings import Settings
 from app.main import create_app
 
@@ -90,7 +89,11 @@ async def test_chat_valid_token_proceeds(
         mp.setattr("app.api.routes.build_user_client", AsyncMock(return_value=client_mock))
         mp.setattr(
             "app.api.routes.build_plant_context",
-            AsyncMock(return_value=__import__("app.supabase.context", fromlist=["ContextBundle"]).ContextBundle(light=[])),
+            AsyncMock(
+                return_value=__import__(
+                    "app.supabase.context", fromlist=["ContextBundle"]
+                ).ContextBundle(light=[])
+            ),
         )
         mp.setattr(
             "app.api.routes.call_gemini",

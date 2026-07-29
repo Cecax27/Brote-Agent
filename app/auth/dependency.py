@@ -1,6 +1,6 @@
 from fastapi import Request
 
-from app.auth.tokens import verify_access_token, AuthError, AUTH_ERROR_MESSAGE
+from app.auth.tokens import AUTH_ERROR_MESSAGE, AuthError, verify_access_token
 from app.logging import get_logger
 
 logger = get_logger(__name__)

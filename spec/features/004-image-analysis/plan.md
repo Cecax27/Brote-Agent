@@ -155,12 +155,14 @@ Key flows (delta from 003):
 Settings added to `app/config/settings.py`:
 
 ```python
-gemini_vision_model: str = "gemini-2.0-flash"      # vision-capable model; team confirms (see users-tasks.md)
-gemini_vision_temperature: float = 0.4             # lower than text; calm, not hallucinatory
-vision_max_image_bytes: int = 8_000_000            # raw upload/download cap before resize (~8 MiB)
-vision_max_download_bytes: int = 10_000_000        # ceiling on the public-bucket GET stream
-vision_max_dimension: int = 1024                   # longest side after resize
-vision_jpeg_quality: int = 85                     # re-encode quality
+gemini_vision_model: str = (
+    "gemini-2.0-flash"  # vision-capable model; team confirms (see users-tasks.md)
+)
+gemini_vision_temperature: float = 0.4  # lower than text; calm, not hallucinatory
+vision_max_image_bytes: int = 8_000_000  # raw upload/download cap before resize (~8 MiB)
+vision_max_download_bytes: int = 10_000_000  # ceiling on the public-bucket GET stream
+vision_max_dimension: int = 1024  # longest side after resize
+vision_jpeg_quality: int = 85  # re-encode quality
 vision_allowed_mime: list[str] = ["image/jpeg", "image/png", "image/webp"]
 ```
 

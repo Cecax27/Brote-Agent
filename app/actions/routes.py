@@ -6,8 +6,8 @@ from typing import TYPE_CHECKING
 from fastapi import APIRouter, Depends, Request
 from pydantic import BaseModel
 
-from app.actions.audit import log_action_executed
 import app.actions.handlers as handlers_mod
+from app.actions.audit import log_action_executed
 from app.actions.models import payload_digest
 from app.actions.registry import resolve_action
 from app.actions.tokens import TokenAuthError, verify_confirm_token

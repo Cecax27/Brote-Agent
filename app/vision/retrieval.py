@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING
 import httpx
 
 from app.agent.loop import UpstreamError
-from app.config.settings import Settings
+from app.config.settings import Settings  # noqa: TC001
 from app.logging import get_logger
 from app.supabase import schema as s
 
@@ -14,6 +14,9 @@ if TYPE_CHECKING:
     from supabase._async.client import AsyncClient
 
 logger = get_logger(__name__)
+
+_PHOTO_FETCH_UPSTREAM = "El servicio de fotos no respondió. Inténtalo de nuevo en un momento."
+_PHOTO_TOO_LARGE = "La foto es demasiado grande para analizarla."
 
 
 class ImageNotFoundError(Exception):
@@ -44,9 +47,7 @@ async def resolve_journal_photo(
     return ResolvedPhoto(url=url)
 
 
-async def resolve_plant_latest_photo(
-    client: "AsyncClient", plant_id: str
-) -> ResolvedPhoto | None:
+async def resolve_plant_latest_photo(client: "AsyncClient", plant_id: str) -> ResolvedPhoto | None:
     plant_result = (
         await client.table(s.TABLE_PLANTS)
         .select(s.COL_PHOTO_URL)
@@ -85,20 +86,16 @@ async def fetch_photo_bytes(url: str, settings: Settings) -> bytes:
                     "photo_fetch_bad_status",
                     status_code=response.status_code,
                 )
-                raise UpstreamError(
-                    "El servicio de fotos no respondió. Inténtalo de nuevo en un momento."
-                )
+                raise UpstreamError(_PHOTO_FETCH_UPSTREAM)  # noqa: TRY301
             content_length = response.headers.get("content-length")
             if content_length and int(content_length) > settings.vision_max_download_bytes:
-                raise UpstreamError("La foto es demasiado grande para analizarla.")
+                raise UpstreamError(_PHOTO_TOO_LARGE)  # noqa: TRY301
             raw = response.content
             if len(raw) > settings.vision_max_download_bytes:
-                raise UpstreamError("La foto es demasiado grande para analizarla.")
+                raise UpstreamError(_PHOTO_TOO_LARGE)  # noqa: TRY301
             return raw
     except UpstreamError:
         raise
     except Exception as exc:
         logger.exception("photo_fetch_failed")
-        raise UpstreamError(
-            "El servicio de fotos no respondió. Inténtalo de nuevo en un momento."
-        ) from exc
+        raise UpstreamError(_PHOTO_FETCH_UPSTREAM) from exc
