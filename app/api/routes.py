@@ -136,7 +136,7 @@ async def chat(
         max_plants=settings.context_max_plants,
         max_entries=settings.context_max_recent_entries,
     )
-    context_str = format_context_for_gemini(bundle)
+    context_str = format_context_for_gemini(bundle, user_name=user.display_name)
 
     result = await call_gemini(
         message=body.message,

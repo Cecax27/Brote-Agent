@@ -253,12 +253,17 @@ async def build_plant_context(
         ) from exc
 
 
-def format_context_for_gemini(bundle: ContextBundle) -> str:
+def format_context_for_gemini(bundle: ContextBundle, *, user_name: str | None = None) -> str:
+    parts: list[str] = []
+    if user_name:
+        parts.append(f"[Nombre del usuario: {user_name}]")
+
     if bundle.deep is not None:
-        return _format_deep_context(bundle.deep)
-    if bundle.light is not None:
-        return _format_light_context(bundle.light)
-    return ""
+        parts.append(_format_deep_context(bundle.deep))
+    elif bundle.light is not None:
+        parts.append(_format_light_context(bundle.light))
+
+    return "\n".join(parts) if parts else ""
 
 
 def _format_light_context(plants: list[PlantSummary]) -> str:

@@ -7,12 +7,22 @@ logger = get_logger(__name__)
 
 
 class UserIdentity:
-    def __init__(self, sub: str, access_token: str) -> None:
+    def __init__(self, sub: str, access_token: str, display_name: str | None = None) -> None:
         self.sub = sub
         self.access_token = access_token
+        self.display_name = display_name
 
     def __repr__(self) -> str:
         return f"UserIdentity(sub={self.sub})"
+
+
+def _extract_display_name(data: dict) -> str | None:
+    user_meta = data.get("user_metadata")
+    if isinstance(user_meta, dict):
+        name = user_meta.get("display_name")
+        if isinstance(name, str) and name.strip():
+            return name.strip()
+    return None
 
 
 async def get_authenticated_user(request: Request) -> UserIdentity:
@@ -29,4 +39,8 @@ async def get_authenticated_user(request: Request) -> UserIdentity:
         raise AuthError(AUTH_ERROR_MESSAGE)
 
     data = await verify_access_token(settings.supabase_url, token)
-    return UserIdentity(sub=data["id"], access_token=token)
+    return UserIdentity(
+        sub=data["id"],
+        access_token=token,
+        display_name=_extract_display_name(data),
+    )

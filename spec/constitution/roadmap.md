@@ -47,7 +47,7 @@ What: The AI can read the user's plants and their history. Security and privacy 
 - [x] Scoped Supabase client — query as the authenticated user so Row Level Security applies (access token as key)
 - [x] Context builder — gather the relevant plant(s), journal entries, watering schedule, light history, photo metadata to inject into the AI context window
 - [x] Data minimization — capped `.limit()`, date windows, photo metadata only (no URLs/bytes); configurable caps in settings
-- [ ] **Include user display name in context** — fetch the user's name from Supabase and pass it to the AI so Flora can address the user by name. Use `raw_user_meta_data->>'name'` or a profile lookup; keep it minimal.
+- [x] **Include user display name in context** — fetch the user's name from Supabase and pass it to the AI so Flora can address the user by name. Use `raw_user_meta_data->>'name'` or a profile lookup; keep it minimal.
 - [ ] Verify RLS isolation — confirm PostgREST denial on cross-user reads (manual probe pending)
 - [ ] Ruff — `ruff check` and `ruff format --check` pass
 - [ ] Manual smoke — test against real Supabase project with seeded data (gated on user's Supabase prerequisites)
