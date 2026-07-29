@@ -47,6 +47,7 @@ What: The AI can read the user's plants and their history. Security and privacy 
 - [x] Scoped Supabase client — query as the authenticated user so Row Level Security applies (access token as key)
 - [x] Context builder — gather the relevant plant(s), journal entries, watering schedule, light history, photo metadata to inject into the AI context window
 - [x] Data minimization — capped `.limit()`, date windows, photo metadata only (no URLs/bytes); configurable caps in settings
+- [ ] **Include user display name in context** — fetch the user's name from Supabase and pass it to the AI so Flora can address the user by name. Use `raw_user_meta_data->>'name'` or a profile lookup; keep it minimal.
 - [ ] Verify RLS isolation — confirm PostgREST denial on cross-user reads (manual probe pending)
 - [ ] Ruff — `ruff check` and `ruff format --check` pass
 - [ ] Manual smoke — test against real Supabase project with seeded data (gated on user's Supabase prerequisites)
@@ -70,7 +71,18 @@ What: The user can send photos and the AI analyzes them — plant health, pest/d
 - [ ] Calibration guidance — ask the user for context (light, recent watering) before diagnosing so the AI avoids inventing answers
 - [ ] Photo size and cost limits — resize/optimize images before sending to the vision model to control cost and latency
 
-### 005-dynamic-states
+### 005-conversation-continuation
+What: The AI remembers what was said. Instead of every `/chat` call being a blank slate, the agent stores messages in `ai_conversations` / `ai_messages` and loads recent history into the Gemini context window for a real ongoing conversation.
+- [ ] Create new conversation — POST endpoint that returns a `conversation_id` the client attaches to subsequent messages
+- [ ] Store messages — on each `/chat` call, persist the user message and AI reply as `ai_messages` rows (role `user` / `assistant`)
+- [ ] Load conversation history into context — fetch the last N messages for the active conversation and include them in the prompt before the user's current message
+- [ ] List user conversations — GET endpoint returning all conversations for the authenticated user (id, title, plant_id, updated_at)
+- [ ] Get conversation messages — GET endpoint returning the full message list for a conversation
+- [ ] Auto-title — generate a short Spanish title from the first user message and store it on the conversation row
+- [ ] Scope conversations to plants — conversations optionally link to a `plant_id`; the context builder respects this when loading history
+- [ ] Token budget — cap history length (configurable message count) to stay within model context limits
+
+### 006-dynamic-states
 What: Replace the static "answering..." state with lively intermediate status messages while the AI works. Makes the app feel alive and sets expectations about what the agent is doing.
 - [ ] Stream intermediate status events from the agent alongside the final answer (SSE or chunked response)
 - [ ] Status vocabulary — context-aware messages like "Revisando mi wiki de plantas…", "Buscando en tu jardín…", "Analizando la foto…", "Buscando en internet…"
@@ -78,7 +90,7 @@ What: Replace the static "answering..." state with lively intermediate status me
 - [ ] Optional humor — lighthearted messages that stay on-brand without turning help into a joke
 - [ ] Keep statuses honest — only emit a status when that step is actually happening
 
-### 006-web-search
+### 007-web-search
 What: The agent can search the internet to answer with current, sourced information and hand the user useful links.
 - [ ] Integrate a web search tool the AI can call during a conversation
 - [ ] Source-grounded responses — when the AI uses search results, reference them and surface links (articles, videos, products)
@@ -90,7 +102,6 @@ What: The agent can search the internet to answer with current, sourced informat
 
 Explicitly out of scope for the first version. Keep these out of the codebase unless revisited.
 
-- **Conversation persistence.** Do not store chat history. The agent is per-request. Useful outputs are saved by the user into Supabase (a tip, a journal entry, a watering schedule) — the conversation itself disappears. This is why the write-back feature (#003) exists.
 - **Image creation.** No text-to-image generation. Not now, not later.
 - **Off-topic conversation.** The agent specializes in plant care only. Guard against burning credits on unrelated questions; decline gracefully and steer back to plants.
 
