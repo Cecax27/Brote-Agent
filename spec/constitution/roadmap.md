@@ -64,12 +64,12 @@ What: The AI can write data back to Supabase on the user's behalf when they conf
 
 ### 004-image-analysis
 What: The user can send photos and the AI analyzes them — plant health, pest/disease symptoms, species identification.
-- [ ] Image upload contract — how the app sends images (direct upload to Supabase Storage + URL, or multipart to the agent)
-- [ ] Vision model integration — send image + prompt to Gemini vision capabilities
-- [ ] Plant health diagnosis — analyze leaves for yellowing, spots, pests, dehydration, etc., and recommend care
-- [ ] Plant identification — suggest species from a photo with a confidence indicator
-- [ ] Calibration guidance — ask the user for context (light, recent watering) before diagnosing so the AI avoids inventing answers
-- [ ] Photo size and cost limits — resize/optimize images before sending to the vision model to control cost and latency
+- [x] Image upload contract — how the app sends images (direct upload to Supabase Storage + URL, or multipart to the agent)
+- [x] Vision model integration — send image + prompt to Gemini vision capabilities
+- [x] Plant health diagnosis — analyze leaves for yellowing, spots, pests, dehydration, etc., and recommend care
+- [x] Plant identification — suggest species from a photo with a confidence indicator
+- [x] Calibration guidance — ask the user for context (light, recent watering) before diagnosing so the AI avoids inventing answers
+- [x] Photo size and cost limits — resize/optimize images before sending to the vision model to control cost and latency
 
 ### 005-conversation-continuation
 What: The AI remembers what was said. Instead of every `/chat` call being a blank slate, the agent stores messages in `ai_conversations` / `ai_messages` and loads recent history into the Gemini context window for a real ongoing conversation.
