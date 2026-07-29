@@ -5,6 +5,8 @@ from app.actions.routes import InvalidActionError
 from app.agent.loop import UpstreamError
 from app.auth.tokens import AuthError
 from app.logging import get_logger
+from app.vision.images import InvalidImageError
+from app.vision.retrieval import ImageNotFoundError
 
 logger = get_logger(__name__)
 
@@ -83,6 +85,36 @@ async def generic_exception_handler(request: Request, exc: Exception) -> JSONRes
             "error": {
                 "code": "INTERNAL_ERROR",
                 "message": "An unexpected error occurred",
+            },
+        },
+    )
+
+
+async def invalid_image_exception_handler(
+    request: Request, exc: InvalidImageError
+) -> JSONResponse:
+    logger.warning("invalid_image", path=request.url.path)
+    return JSONResponse(
+        status_code=400,
+        content={
+            "error": {
+                "code": "INVALID_IMAGE",
+                "message": str(exc),
+            },
+        },
+    )
+
+
+async def image_not_found_exception_handler(
+    request: Request, exc: ImageNotFoundError
+) -> JSONResponse:
+    logger.warning("image_not_found", path=request.url.path)
+    return JSONResponse(
+        status_code=404,
+        content={
+            "error": {
+                "code": "IMAGE_NOT_FOUND",
+                "message": "La foto solicitada no se encontró.",
             },
         },
     )
