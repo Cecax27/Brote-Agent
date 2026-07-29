@@ -47,6 +47,14 @@ brote-agent/
 │   │   ├── client.py        # build_user_client(url, access_token) → AsyncClient
 │   │   ├── schema.py        # TABLE_* / COL_* name constants
 │   │   └── context.py       # build_plant_context → ContextBundle
+│   ├── vision/               # Image analysis — retrieve from Supabase or inline, resize, Gemini vision
+│   │   ├── __init__.py
+│   │   ├── images.py         # validate_image_bytes, resize_image (Pillow)
+│   │   ├── retrieval.py      # resolve stored photos via RLS + fetch from public bucket
+│   │   ├── core.py           # analyze_image_with_gemini (multimodal)
+│   │   ├── models.py         # ImageRef, VisionAnalyzeResponse, VisionAnalysis, etc.
+│   │   ├── routes.py         # POST /vision/analyze-stored, POST /vision/analyze-upload
+│   │   └── audit.py          # log_vision_call() → structlog (no bytes/URLs)
 │   └── logging.py           # structlog JSON to stdout
 ├── tests/
 │   ├── __init__.py
@@ -164,6 +172,6 @@ These are V1.0-scoped limits — features may lift individual items as they land
 - ~~No writes~~ — lifted by 003 (propose→confirm→execute flow).
 - No streaming (single-shot responses).
 - No conversation persistence.
-- No image analysis.
+- ~~No image analysis~~ — lifted by 004.
 - No web search.
 - Spanish-only AI responses.

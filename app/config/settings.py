@@ -19,3 +19,11 @@ class Settings(BaseSettings):
 
     action_signing_secret: str = ""
     action_token_ttl_seconds: int = 300
+
+    gemini_vision_model: str = "gemini-2.0-flash"
+    gemini_vision_temperature: float = 0.4
+    vision_max_image_bytes: int = 8_000_000
+    vision_max_download_bytes: int = 10_000_000
+    vision_max_dimension: int = 1024
+    vision_jpeg_quality: int = 85
+    vision_allowed_mime: list[str] = ["image/jpeg", "image/png", "image/webp"]
