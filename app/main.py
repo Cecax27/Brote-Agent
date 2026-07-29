@@ -18,6 +18,7 @@ from app.api.errors import (
     validation_exception_handler,
 )
 from app.api.routes import router
+from app.api.sse_routes import router as sse_router
 from app.auth.tokens import AuthError
 from app.config.settings import Settings
 from app.conversations.routes import router as conversations_router
@@ -64,6 +65,7 @@ def create_app() -> FastAPI:
     app.add_exception_handler(Exception, generic_exception_handler)
 
     app.include_router(router)
+    app.include_router(sse_router)
     app.include_router(actions_router)
     app.include_router(vision_router)
     app.include_router(conversations_router)

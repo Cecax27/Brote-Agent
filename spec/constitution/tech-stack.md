@@ -22,6 +22,7 @@ brote-agent/
 │   ├── api/
 │   │   ├── __init__.py
 │   │   ├── routes.py        # GET /health, POST /chat
+│   │   ├── sse_routes.py    # POST /chat/stream (SSE)
 │   │   └── errors.py        # Exception handlers -> JSON error envelope
 │   ├── agent/
 │   │   ├── __init__.py
@@ -47,6 +48,10 @@ brote-agent/
 │   │   ├── client.py        # build_user_client(url, access_token) → AsyncClient
 │   │   ├── schema.py        # TABLE_* / COL_* name constants
 │   │   └── context.py       # build_plant_context → ContextBundle
+│   ├── dynamic_states/       # Live status streaming — SSE vocabulary, emitter helpers
+│   │   ├── __init__.py
+│   │   ├── statuses.py        # STATUS_GROUPS vocabulary + pick_status
+│   │   └── emitter.py         # format_sse, status_event, result_event, error_event
 │   ├── conversations/         # Conversation persistence — RLS-scoped store, history builder, routes
 │   │   ├── __init__.py
 │   │   ├── models.py           # Conversation, Message, request/response Pydantic models
@@ -75,6 +80,8 @@ brote-agent/
 │   ├── test_conversations_history.py # format_history_block, trim_to_budget
 │   ├── test_conversations_titles.py # derive_title word-boundary, ellipsis
 │   ├── test_conversations_routes.py # POST/GET /conversations, GET .../messages
+│   ├── test_sse_chat.py         # /chat/stream SSE events + kill-switch
+│   ├── test_sse_vision.py       # Vision SSE streaming
 │   └── test_actions_registry.py  # action model, registry, token lifecycle tests
 ├── docs/
 │   └── api-contract.md      # Routes, request/response JSON, error envelope
@@ -183,7 +190,7 @@ These are V1.0-scoped limits — features may lift individual items as they land
 - ~~No Supabase~~ — lifted by 002 (Supabase read access).
 - ~~No auth~~ — lifted by 002 (JWT verification).
 - ~~No writes~~ — lifted by 003 (propose→confirm→execute flow).
-- No streaming (single-shot responses).
+- ~~No streaming (single-shot responses).~~ — lifted by 006 (SSE dynamic states).
 - ~~No conversation persistence~~ — lifted by 005.
 - ~~No image analysis~~ — lifted by 004.
 - No web search.

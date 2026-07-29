@@ -44,6 +44,9 @@ ignore = [
 "app/conversations/routes.py" = ["FAST002", "B008"]
 "app/conversations/models.py" = ["TC003"]
 "app/conversations/history.py" = ["TC001"]
+"app/dynamic_states/statuses.py" = ["S311"]
+"app/api/sse_routes.py" = ["FAST002", "B008", "C901", "PLR0915", "ANN201", "ANN202", "ARG001", "FBT001", "ANN001"]
+"app/vision/routes.py" = ["FAST002", "B008", "C901", "PLR0915", "ANN201", "ARG001", "FBT001", "BLE001", "PLR0917", "PLR0913", "PLR0911"]
 
 [tool.ruff.format]
 quote-style = "double"

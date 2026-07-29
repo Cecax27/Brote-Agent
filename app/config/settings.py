@@ -32,3 +32,6 @@ class Settings(BaseSettings):
     history_max_chars: int = 6000
     conversation_title_max_chars: int = 48
     conversations_max_results: int = 50
+
+    dynamic_states_enabled: bool = True
+    dynamic_states_include_humor: bool = True
