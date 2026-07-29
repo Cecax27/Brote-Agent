@@ -14,6 +14,7 @@ async def test_chat_passes_context_to_gemini(
     mock_auth_verify: AsyncMock,
     mock_supabase_client: AsyncMock,
     mock_supabase_context: AsyncMock,
+    mock_conversation_store: dict,
     auth_headers: dict,
 ) -> None:
     mock_gemini.return_value = {"reply": "Tu Monstera está bien."}
@@ -39,6 +40,7 @@ async def test_chat_uses_deep_mode_when_plant_id_set(
     mock_auth_verify: AsyncMock,
     mock_supabase_client: AsyncMock,
     mock_supabase_context: AsyncMock,
+    mock_conversation_store: dict,
     auth_headers: dict,
 ) -> None:
     mock_gemini.return_value = {"reply": "Tu planta está creciendo muy bien."}
@@ -72,6 +74,7 @@ async def test_chat_uses_light_mode_when_no_plant_id(
     mock_auth_verify: AsyncMock,
     mock_supabase_client: AsyncMock,
     mock_supabase_context: AsyncMock,
+    mock_conversation_store: dict,
     auth_headers: dict,
 ) -> None:
     mock_gemini.return_value = {"reply": "Tienes 3 plantas que necesitan atención."}
@@ -95,6 +98,7 @@ async def test_chat_supabase_failure_returns_502(
     mock_auth_verify: AsyncMock,
     mock_supabase_client: AsyncMock,
     mock_supabase_context: AsyncMock,
+    mock_conversation_store: dict,
     auth_headers: dict,
 ) -> None:
     mock_auth_verify.return_value = {"id": "test-user-id"}
@@ -121,6 +125,7 @@ async def test_chat_context_sets_data_minimization_bounds(
     mock_auth_verify: AsyncMock,
     mock_supabase_client: AsyncMock,
     mock_supabase_context: AsyncMock,
+    mock_conversation_store: dict,
     auth_headers: dict,
 ) -> None:
     mock_gemini.return_value = {"reply": "Todo bien."}
@@ -145,6 +150,7 @@ async def test_chat_off_topic_refusal_still_works(
     mock_auth_verify: AsyncMock,
     mock_supabase_client: AsyncMock,
     mock_supabase_context: AsyncMock,
+    mock_conversation_store: dict,
     auth_headers: dict,
 ) -> None:
     mock_gemini.return_value = {
@@ -174,6 +180,7 @@ async def test_chat_reply_still_in_spanish(
     mock_auth_verify: AsyncMock,
     mock_supabase_client: AsyncMock,
     mock_supabase_context: AsyncMock,
+    mock_conversation_store: dict,
     auth_headers: dict,
 ) -> None:
     mock_gemini.return_value = {"reply": "¡Claro! Las suculentas necesitan mucha luz y cariño."}

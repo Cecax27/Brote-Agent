@@ -1,13 +1,13 @@
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import TYPE_CHECKING
 
 from app.agent.loop import UpstreamError
 from app.conversations.models import Conversation, ConversationSummary, Message
 from app.supabase.schema import (
-    COL_CONVERSATION_ID,
     COL_CONTENT,
+    COL_CONVERSATION_ID,
     COL_CREATED_AT,
     COL_PHOTO_URL,
     COL_PLANT_ID,
@@ -22,17 +22,23 @@ from app.supabase.schema import (
 if TYPE_CHECKING:
     from supabase import AsyncClient
 
-_STORE_UPSTREAM_MSG = (
-    "El servicio de datos no respondió. Inténtalo de nuevo en un momento."
-)
+_STORE_UPSTREAM_MSG = "El servicio de datos no respondió. Inténtalo de nuevo en un momento."
 
 
 class ConversationNotFoundError(Exception):
     """The conversation does not exist or does not belong to the caller."""
 
+    def __init__(self, conversation_id: str | None = None) -> None:
+        super().__init__(conversation_id)
+        self.conversation_id = conversation_id
+
 
 class ConversationPlantMismatchError(Exception):
     """The conversation's plant_id conflicts with the request's plant_id."""
+
+    def __init__(self, message: str = "") -> None:
+        super().__init__(message)
+        self.message = message
 
 
 def _parse_conversation(row: dict) -> Conversation:
@@ -48,7 +54,7 @@ def _parse_conversation(row: dict) -> Conversation:
 
 def _parse_conversation_summary(row: dict) -> ConversationSummary:
     return ConversationSummary(
-        id=row["id"],
+        conversation_id=row["id"],
         title=row.get(COL_TITLE, "Conversación con Flora"),
         plant_id=row.get(COL_PLANT_ID),
         created_at=_parse_dt(row[COL_CREATED_AT]),
@@ -68,7 +74,7 @@ def _parse_message(row: dict) -> Message:
 def _parse_dt(value: str) -> datetime:
     dt = datetime.fromisoformat(value)
     if dt.tzinfo is None:
-        dt = dt.replace(tzinfo=timezone.utc)
+        dt = dt.replace(tzinfo=UTC)
     return dt
 
 
@@ -172,7 +178,7 @@ async def bump_updated_at(client: AsyncClient, conversation_id: str) -> None:
     try:
         await (
             client.table(TABLE_AI_CONVERSATIONS)
-            .update({COL_UPDATED_AT: datetime.now(timezone.utc).isoformat()})
+            .update({COL_UPDATED_AT: datetime.now(UTC).isoformat()})
             .eq("id", conversation_id)
             .execute()
         )

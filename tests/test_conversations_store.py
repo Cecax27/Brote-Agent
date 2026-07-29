@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
@@ -24,7 +24,7 @@ from app.supabase.schema import (
     COL_USER_ID,
 )
 
-DEFAULT_DT = datetime(2025, 7, 29, 12, 0, 0, tzinfo=timezone.utc).isoformat()
+DEFAULT_DT = datetime(2025, 7, 29, 12, 0, 0, tzinfo=UTC).isoformat()
 
 
 def _conv_dict(**overrides: object) -> dict:
@@ -216,10 +216,12 @@ class TestAppendMessage:
 class TestFetchHistory:
     @pytest.mark.asyncio
     async def test_returns_messages_oldest_first(self) -> None:
-        client = _make_client_list([
-            _msg_dict(role="user", content="Primero"),
-            _msg_dict(role="assistant", content="Segundo"),
-        ])
+        client = _make_client_list(
+            [
+                _msg_dict(role="user", content="Primero"),
+                _msg_dict(role="assistant", content="Segundo"),
+            ]
+        )
 
         msgs = await fetch_history(client, "conv-1", 20)
         assert len(msgs) == 2
@@ -231,7 +233,9 @@ class TestFetchHistory:
         client = _make_client_list([_msg_dict()])
 
         await fetch_history(client, "conv-1", 5)
-        limit_call = client.table.return_value.select.return_value.eq.return_value.order.return_value.limit
+        limit_call = (
+            client.table.return_value.select.return_value.eq.return_value.order.return_value.limit
+        )
         limit_call.assert_called_once_with(5)
 
     @pytest.mark.asyncio
@@ -296,22 +300,24 @@ class TestSetPlantIdOnce:
 class TestListConversations:
     @pytest.mark.asyncio
     async def test_returns_conversations_ordered_by_updated_at_desc(self) -> None:
-        client = _make_client_list([
-            {
-                "id": "conv-2",
-                "title": "Chat 2",
-                "plant_id": None,
-                "updated_at": "2025-07-29T13:00:00+00:00",
-                "created_at": DEFAULT_DT,
-            },
-            {
-                "id": "conv-1",
-                "title": "Chat 1",
-                "plant_id": None,
-                "updated_at": "2025-07-29T12:00:00+00:00",
-                "created_at": DEFAULT_DT,
-            },
-        ])
+        client = _make_client_list(
+            [
+                {
+                    "id": "conv-2",
+                    "title": "Chat 2",
+                    "plant_id": None,
+                    "updated_at": "2025-07-29T13:00:00+00:00",
+                    "created_at": DEFAULT_DT,
+                },
+                {
+                    "id": "conv-1",
+                    "title": "Chat 1",
+                    "plant_id": None,
+                    "updated_at": "2025-07-29T12:00:00+00:00",
+                    "created_at": DEFAULT_DT,
+                },
+            ]
+        )
 
         convs = await list_conversations(client, 50)
         assert len(convs) == 2
@@ -340,10 +346,12 @@ class TestListConversations:
 class TestFetchMessages:
     @pytest.mark.asyncio
     async def test_returns_messages_for_owned_conversation(self) -> None:
-        client = _make_client_list([
-            _msg_dict(role="user", content="A"),
-            _msg_dict(role="assistant", content="B"),
-        ])
+        client = _make_client_list(
+            [
+                _msg_dict(role="user", content="A"),
+                _msg_dict(role="assistant", content="B"),
+            ]
+        )
 
         with patch(
             "app.conversations.store.get_conversation",

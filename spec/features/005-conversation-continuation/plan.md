@@ -160,10 +160,10 @@ Key flows (delta from 004):
 Settings added to `app/config/settings.py`:
 
 ```python
-history_max_messages: int = 20          # prior turns loaded into context per /chat
-history_max_chars: int = 6000           # combined history-block char budget; oldest trimmed first
+history_max_messages: int = 20  # prior turns loaded into context per /chat
+history_max_chars: int = 6000  # combined history-block char budget; oldest trimmed first
 conversation_title_max_chars: int = 48  # auto-title length cap
-conversations_max_results: int = 50      # GET /conversations list cap
+conversations_max_results: int = 50  # GET /conversations list cap
 ```
 
 (No new secrets. No new runtime deps — the supabase-py async client already in use provides the inserts/selects.)

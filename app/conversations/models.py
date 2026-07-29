@@ -23,7 +23,7 @@ class Message(BaseModel):
 
 
 class ConversationSummary(BaseModel):
-    conversation_id: str = Field(alias="id")
+    conversation_id: str
     title: str
     plant_id: str | None = None
     updated_at: datetime

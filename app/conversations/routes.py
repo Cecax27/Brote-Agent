@@ -17,7 +17,6 @@ from app.conversations.models import (
 )
 from app.conversations.store import (
     ConversationNotFoundError,
-    ConversationPlantMismatchError,
     create_conversation,
     fetch_messages,
     list_conversations,

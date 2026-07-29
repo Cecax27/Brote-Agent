@@ -1,3 +1,4 @@
+from datetime import UTC
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
@@ -155,9 +156,9 @@ class TestListConversations:
         auth_headers: dict,
     ) -> None:
         mock_auth_verify.return_value = {"id": "test-user-id"}
-        from datetime import datetime, timezone
+        from datetime import datetime
 
-        dt_now = datetime(2025, 7, 29, 12, 0, 0, tzinfo=timezone.utc)
+        dt_now = datetime(2025, 7, 29, 12, 0, 0, tzinfo=UTC)
         conv1 = MagicMock()
         conv1.conversation_id = "conv-1"
         conv1.title = "Hola Flora"
@@ -198,9 +199,9 @@ class TestGetConversationMessages:
         auth_headers: dict,
     ) -> None:
         mock_auth_verify.return_value = {"id": "test-user-id"}
-        from datetime import datetime, timezone
+        from datetime import datetime
 
-        dt_now = datetime(2025, 7, 29, 12, 0, 0, tzinfo=timezone.utc)
+        dt_now = datetime(2025, 7, 29, 12, 0, 0, tzinfo=UTC)
         msg1 = MagicMock()
         msg1.role = "user"
         msg1.content = "Hola"

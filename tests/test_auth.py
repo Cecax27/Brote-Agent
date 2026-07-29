@@ -1,4 +1,5 @@
-from unittest.mock import AsyncMock
+from datetime import UTC
+from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 from httpx import ASGITransport, AsyncClient
@@ -99,6 +100,25 @@ async def test_chat_valid_token_proceeds(
             "app.api.routes.call_gemini",
             AsyncMock(return_value={"reply": "Hola"}),
         )
+
+        from datetime import datetime
+
+        dt = datetime(2025, 7, 29, 12, 0, 0, tzinfo=UTC)
+        conv = MagicMock()
+        conv.conversation_id = "conv-auth-test"
+        conv.user_id = "user-123"
+        conv.plant_id = None
+        conv.title = "Conversación con Flora"
+        conv.created_at = dt
+        conv.updated_at = dt
+
+        mp.setattr("app.api.routes.create_conversation", AsyncMock(return_value=conv))
+        mp.setattr("app.api.routes.get_conversation", AsyncMock(return_value=conv))
+        mp.setattr("app.api.routes.append_message", AsyncMock())
+        mp.setattr("app.api.routes.fetch_history", AsyncMock(return_value=[]))
+        mp.setattr("app.api.routes.bump_updated_at", AsyncMock())
+        mp.setattr("app.api.routes.set_title", AsyncMock())
+        mp.setattr("app.api.routes.set_plant_id_once", AsyncMock())
 
         response = await auth_client.post(
             "/chat",

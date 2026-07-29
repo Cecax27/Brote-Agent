@@ -1,9 +1,9 @@
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from app.conversations.history import format_history_block, trim_to_budget
 from app.conversations.models import Message
 
-DT = datetime(2025, 7, 29, 12, 0, 0, tzinfo=timezone.utc)
+DT = datetime(2025, 7, 29, 12, 0, 0, tzinfo=UTC)
 
 
 def _msg(role: str, content: str) -> Message:

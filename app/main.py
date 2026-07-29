@@ -58,7 +58,9 @@ def create_app() -> FastAPI:
     app.add_exception_handler(UpstreamError, upstream_exception_handler)
     app.add_exception_handler(RequestValidationError, validation_exception_handler)
     app.add_exception_handler(ConversationNotFoundError, conversation_not_found_exception_handler)
-    app.add_exception_handler(ConversationPlantMismatchError, conversation_plant_mismatch_exception_handler)
+    app.add_exception_handler(
+        ConversationPlantMismatchError, conversation_plant_mismatch_exception_handler
+    )
     app.add_exception_handler(Exception, generic_exception_handler)
 
     app.include_router(router)

@@ -22,6 +22,7 @@ async def test_chat_returns_reply(
     mock_auth_verify: AsyncMock,
     mock_supabase_client: AsyncMock,
     mock_supabase_context: AsyncMock,
+    mock_conversation_store: dict,
     auth_headers: dict,
 ) -> None:
     mock_gemini.return_value = {"reply": "Hola, ¿cómo puedo ayudarte con tus plantas?"}
@@ -36,6 +37,7 @@ async def test_chat_returns_reply(
     data = response.json()
     assert "reply" in data
     assert data["reply"] == "Hola, ¿cómo puedo ayudarte con tus plantas?"
+    assert "conversation_id" in data
     assert "proposed_action" in data
     mock_gemini.assert_called_once()
 
@@ -71,6 +73,7 @@ def test_chat_upstream_error_returns_502(
     mock_auth_verify: AsyncMock,
     mock_supabase_client: AsyncMock,
     mock_supabase_context: AsyncMock,
+    mock_conversation_store: dict,
     auth_headers: dict,
 ) -> None:
     mock_gemini.side_effect = UpstreamError(
@@ -94,6 +97,7 @@ def test_chat_unexpected_error_returns_500(
     mock_auth_verify: AsyncMock,
     mock_supabase_client: AsyncMock,
     mock_supabase_context: AsyncMock,
+    mock_conversation_store: dict,
     auth_headers: dict,
 ) -> None:
     mock_gemini.side_effect = Exception("Unexpected internal failure")

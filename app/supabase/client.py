@@ -2,10 +2,9 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from supabase import create_async_client
-
 from app.agent.loop import UpstreamError
 from app.logging import get_logger
+from supabase import create_async_client
 
 if TYPE_CHECKING:
     from supabase._async.client import AsyncClient

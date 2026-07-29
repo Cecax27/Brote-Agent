@@ -13,6 +13,7 @@ async def test_chat_returns_proposed_action_when_gemini_proposes(
     mock_auth_verify: AsyncMock,
     mock_supabase_client: AsyncMock,
     mock_supabase_context: AsyncMock,
+    mock_conversation_store: dict,
     auth_headers: dict,
 ) -> None:
     mock_gemini.return_value = {
@@ -62,6 +63,7 @@ async def test_chat_proposed_action_null_when_no_intent(
     mock_auth_verify: AsyncMock,
     mock_supabase_client: AsyncMock,
     mock_supabase_context: AsyncMock,
+    mock_conversation_store: dict,
     auth_headers: dict,
 ) -> None:
     mock_gemini.return_value = {"reply": "Hola, ¿cómo puedo ayudarte con tus plantas?"}
@@ -87,6 +89,7 @@ async def test_chat_proposed_action_null_on_unknown_action_type(
     mock_auth_verify: AsyncMock,
     mock_supabase_client: AsyncMock,
     mock_supabase_context: AsyncMock,
+    mock_conversation_store: dict,
     auth_headers: dict,
 ) -> None:
     mock_gemini.return_value = {
@@ -121,6 +124,7 @@ async def test_chat_proposed_action_null_on_plant_mismatch(
     mock_auth_verify: AsyncMock,
     mock_supabase_client: AsyncMock,
     mock_supabase_context: AsyncMock,
+    mock_conversation_store: dict,
     auth_headers: dict,
 ) -> None:
     mock_gemini.return_value = {
@@ -154,6 +158,7 @@ async def test_chat_proposed_action_null_on_invalid_payload(
     mock_auth_verify: AsyncMock,
     mock_supabase_client: AsyncMock,
     mock_supabase_context: AsyncMock,
+    mock_conversation_store: dict,
     auth_headers: dict,
 ) -> None:
     mock_gemini.return_value = {
@@ -193,6 +198,7 @@ async def test_chat_proposed_action_add_journal_entry(
     mock_auth_verify: AsyncMock,
     mock_supabase_client: AsyncMock,
     mock_supabase_context: AsyncMock,
+    mock_conversation_store: dict,
     auth_headers: dict,
 ) -> None:
     mock_gemini.return_value = {

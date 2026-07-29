@@ -38,8 +38,12 @@ ignore = [
 ]
 
 [tool.ruff.lint.per-file-ignores]
-"tests/**" = ["S101", "ASYNC", "ANN"]
+"tests/**" = ["S101", "S105", "ASYNC", "ANN", "PLR0913", "PLR0917", "ARG001", "ARG002", "PLC0415", "F841", "E501", "ERA001", "FBT003", "RUF100"]
 "app/config/settings.py" = ["D101"]
+"app/conversations/audit.py" = ["PLR0913"]
+"app/conversations/routes.py" = ["FAST002", "B008"]
+"app/conversations/models.py" = ["TC003"]
+"app/conversations/history.py" = ["TC001"]
 
 [tool.ruff.format]
 quote-style = "double"
