@@ -84,11 +84,11 @@ What: The AI remembers what was said. Instead of every `/chat` call being a blan
 
 ### 006-dynamic-states
 What: Replace the static "answering..." state with lively intermediate status messages while the AI works. Makes the app feel alive and sets expectations about what the agent is doing.
-- [ ] Stream intermediate status events from the agent alongside the final answer (SSE or chunked response)
-- [ ] Status vocabulary — context-aware messages like "Revisando mi wiki de plantas…", "Buscando en tu jardín…", "Analizando la foto…", "Buscando en internet…"
-- [ ] Map statuses to real agent steps — reading Supabase, running web search, analyzing image, generating response
-- [ ] Optional humor — lighthearted messages that stay on-brand without turning help into a joke
-- [ ] Keep statuses honest — only emit a status when that step is actually happening
+- [x] Stream intermediate status events from the agent alongside the final answer (SSE or chunked response)
+- [x] Status vocabulary — context-aware messages like "Revisando mi wiki de plantas…", "Buscando en tu jardín…", "Analizando la foto…", "Buscando en internet…"
+- [x] Map statuses to real agent steps — reading Supabase, running web search, analyzing image, generating response
+- [x] Optional humor — lighthearted messages that stay on-brand without turning help into a joke
+- [x] Keep statuses honest — only emit a status when that step is actually happening
 
 ### 007-web-search
 What: The agent can search the internet to answer with current, sourced information and hand the user useful links.
