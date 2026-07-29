@@ -73,14 +73,14 @@ What: The user can send photos and the AI analyzes them — plant health, pest/d
 
 ### 005-conversation-continuation
 What: The AI remembers what was said. Instead of every `/chat` call being a blank slate, the agent stores messages in `ai_conversations` / `ai_messages` and loads recent history into the Gemini context window for a real ongoing conversation.
-- [ ] Create new conversation — POST endpoint that returns a `conversation_id` the client attaches to subsequent messages
-- [ ] Store messages — on each `/chat` call, persist the user message and AI reply as `ai_messages` rows (role `user` / `assistant`)
-- [ ] Load conversation history into context — fetch the last N messages for the active conversation and include them in the prompt before the user's current message
-- [ ] List user conversations — GET endpoint returning all conversations for the authenticated user (id, title, plant_id, updated_at)
-- [ ] Get conversation messages — GET endpoint returning the full message list for a conversation
-- [ ] Auto-title — generate a short Spanish title from the first user message and store it on the conversation row
-- [ ] Scope conversations to plants — conversations optionally link to a `plant_id`; the context builder respects this when loading history
-- [ ] Token budget — cap history length (configurable message count) to stay within model context limits
+- [x] Create new conversation — POST endpoint that returns a `conversation_id` the client attaches to subsequent messages
+- [x] Store messages — on each `/chat` call, persist the user message and AI reply as `ai_messages` rows (role `user` / `assistant`)
+- [x] Load conversation history into context — fetch the last N messages for the active conversation and include them in the prompt before the user's current message
+- [x] List user conversations — GET endpoint returning all conversations for the authenticated user (id, title, plant_id, updated_at)
+- [x] Get conversation messages — GET endpoint returning the full message list for a conversation
+- [x] Auto-title — generate a short Spanish title from the first user message and store it on the conversation row
+- [x] Scope conversations to plants — conversations optionally link to a `plant_id`; the context builder respects this when loading history
+- [x] Token budget — cap history length (configurable message count) to stay within model context limits
 
 ### 006-dynamic-states
 What: Replace the static "answering..." state with lively intermediate status messages while the AI works. Makes the app feel alive and sets expectations about what the agent is doing.
