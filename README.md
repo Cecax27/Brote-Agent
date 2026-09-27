@@ -64,7 +64,9 @@ Quick reference:
 
 ## Deploy
 
-Push to `main` triggers the CI pipeline (GitHub Actions): lint, test, build Docker image, deploy to Cloud Run, and smoke test.
+See [`docs/deployment.md`](docs/deployment.md) for the full guide (prerequisites, secrets, manual and CI deploys, rollback, troubleshooting).
+
+TL;DR: push to `main` triggers the CI pipeline (GitHub Actions): lint, test, build Docker image, deploy to Cloud Run, and smoke test.
 
 Manual deploy via Cloud Build:
 
