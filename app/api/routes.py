@@ -7,6 +7,13 @@ from pydantic import BaseModel, Field
 
 from app.actions.helpers import build_proposed_action
 from app.actions.models import ProposedActionResponse
+from app.agent.auto_vision import (
+    VisionSubCallMissingPhotoError,
+    VisionSubCallUpstreamError,
+    parse_internal_vision_request,
+    run_auto_vision_followup,
+    run_text_only_followup,
+)
 from app.agent.loop import UpstreamError, call_gemini
 from app.auth.dependency import UserIdentity, get_authenticated_user
 from app.conversations.history import format_history_block, trim_to_budget
@@ -25,7 +32,6 @@ from app.conversations.titles import derive_title
 from app.logging import get_logger
 from app.supabase.client import build_user_client
 from app.supabase.context import build_plant_context, format_context_for_gemini
-from app.vision.models import ImageRef, VisionRequest
 
 if TYPE_CHECKING:
     from app.config.settings import Settings
@@ -47,7 +53,6 @@ class ChatResponse(BaseModel):
     conversation_id: str
     reply: str
     proposed_action: ProposedActionResponse | None = None
-    vision_request: VisionRequest | None = None
 
 
 class HealthResponse(BaseModel):
@@ -133,7 +138,7 @@ async def health() -> HealthResponse:
 
 
 @router.post("/chat")
-async def chat(
+async def chat(  # noqa: C901, PLR0912, PLR0915
     body: ChatRequest,
     request: Request,
     user: UserIdentity = Depends(get_authenticated_user),  # noqa: B008, FAST002
@@ -236,9 +241,42 @@ async def chat(
         logger.error("gemini_unexpected_result_type", type=type(result).__name__)
         raise UpstreamError(_UPSTREAM_MSG)
 
-    reply = str(result.get("reply", ""))
-    proposed_action = build_proposed_action(result, effective_plant_id, user.sub, settings)
-    vision_request = _build_vision_request(result, effective_plant_id)
+    # 6b. Inline auto-vision: if Flora decided she needs a photo, resolve
+    # and analyze it now (transparent to the user) and run a second Gemini
+    # call whose `reply` becomes the user-facing answer.
+    final_result = result
+    internal_vision_request = parse_internal_vision_request(result, effective_plant_id)
+    if internal_vision_request is not None:
+        try:
+            final_result = await run_auto_vision_followup(
+                client=client,
+                vision_request=internal_vision_request,
+                effective_plant_id=effective_plant_id,
+                body_message=body.message,
+                base_context_str=context_str,
+                settings=settings,
+            )
+        except VisionSubCallMissingPhotoError:
+            try:
+                final_result = await run_text_only_followup(
+                    body_message=body.message,
+                    base_context_str=context_str,
+                    vision_request=internal_vision_request,
+                    settings=settings,
+                )
+            except VisionSubCallUpstreamError as exc:
+                _log_failed_path(start, user.sub, conv_id, "/chat")
+                raise UpstreamError(exc.message or _UPSTREAM_MSG) from exc
+        except VisionSubCallUpstreamError as exc:
+            _log_failed_path(start, user.sub, conv_id, "/chat")
+            raise UpstreamError(exc.message or _UPSTREAM_MSG) from exc
+
+    if not isinstance(final_result, dict):
+        logger.error("gemini_unexpected_result_type", type=type(final_result).__name__)
+        raise UpstreamError(_UPSTREAM_MSG)
+
+    reply = str(final_result.get("reply", ""))
+    proposed_action = build_proposed_action(final_result, effective_plant_id, user.sub, settings)
 
     # 7. Persist assistant
     await append_message(client, conv_id, "assistant", reply)
@@ -270,47 +308,17 @@ async def chat(
         conversation_id=conv_id,
         reply=reply,
         proposed_action=proposed_action,
-        vision_request=vision_request,
     )
 
 
-def _build_vision_request(  # noqa: PLR0911
-    result: dict[str, Any],
-    plant_id: str | None,
-) -> VisionRequest | None:
-    raw = result.get("vision_request")
-    if raw is None:
-        return None
-
-    if not isinstance(raw, dict):
-        return None
-
-    suggested_raw = raw.get("suggested_ref")
-    if not isinstance(suggested_raw, dict):
-        return None
-
-    kind = str(suggested_raw.get("kind", ""))
-    if kind not in ("journal_entry", "plant_latest"):
-        return None
-
-    reason_es = str(raw.get("reason_es", ""))
-
-    if kind == "journal_entry":
-        journal_entry_id = str(suggested_raw.get("journal_entry_id", "") or "")
-        if not journal_entry_id:
-            return None
-        suggested_ref = ImageRef(kind=kind, journal_entry_id=journal_entry_id)
-    else:
-        ref_plant_id = str(suggested_raw.get("plant_id", "") or "")
-        if not ref_plant_id:
-            return None
-        if plant_id is not None and ref_plant_id != plant_id:
-            logger.warning(
-                "vision_request_plant_mismatch",
-                vision_plant=ref_plant_id,
-                request_plant=plant_id,
-            )
-            return None
-        suggested_ref = ImageRef(kind=kind, plant_id=ref_plant_id)
-
-    return VisionRequest(reason_es=reason_es, suggested_ref=suggested_ref)
+def _log_failed_path(start: float, user_sub: str, conversation_id: str, path: str) -> None:
+    elapsed_ms = int((time.monotonic() - start) * 1000)
+    logger.info(
+        "request_failed",
+        method="POST",
+        path=path,
+        status=502,
+        duration_ms=elapsed_ms,
+        user=user_sub,
+        conversation_id=conversation_id,
+    )

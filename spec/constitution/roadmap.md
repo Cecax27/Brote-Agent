@@ -109,6 +109,17 @@ What: Link vision analysis back into the ongoing conversation thread. `/vision/*
 - [ ] Audit gains `conversation_id` scalar (no content/vision text)
 - [ ] Dual mode: stateless when `conversation_id` absent (004 regression), threaded when present
 
+### Auto-vision inside chat (incremental change layered on 005/008)
+What: Remove the two-hop UX where the agent asked the user to share a photo and the app made a second `POST /vision/*` call. Instead, when Flora decides a photo would help her answer, the `/chat` and `/chat/stream` endpoints transparently resolve the referenced photo, run the vision analysis, and use the result to compose `reply`. The mobile app sees a single response (`reply` + `proposed_action`) and an `analyzing_photo` dynamic-state event while the analysis runs.
+- [x] `vision_request` is no longer surfaced in the `/chat` response — it is a server-internal channel only
+- [x] First Gemini call → if `vision_request` is present, emit `analyzing_photo` → resolve + analyze the photo → run a second Gemini call whose `reply` becomes the user-facing answer
+- [x] Photo unavailable (RLS denial, missing photo, invalid image) → run a text-only follow-up that tells Flora to proceed from context alone
+- [x] Vision upstream failure (Storage 5xx, vision Gemini 502) → `UPSTREAM_ERROR` to the client (no fallback)
+- [x] `/vision/*` endpoints remain available for direct photo analysis (e.g. a manual "send a photo" button)
+- [x] `app/agent/auto_vision.py` — encapsulates the resolve + analyze + second-pass call flow shared by streaming and single-shot handlers
+- [x] `ACTION_RESPONSE_SCHEMA` still defines `vision_request` so the agent can return it; the schema's narrower `FOLLOWUP_RESPONSE_SCHEMA` is used for the second-pass call (no `vision_request`, no `vision`)
+- [x] `docs/api-contract.md` — `/chat` response shape updated; image-analysis gating rule updated to describe the transparent flow
+
 ## Non-Goals (V1.0)
 
 Explicitly out of scope for the first version. Keep these out of the codebase unless revisited.

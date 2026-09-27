@@ -6,13 +6,15 @@ from fastapi import APIRouter, Depends, Request
 from fastapi.responses import StreamingResponse
 
 from app.actions.helpers import build_proposed_action
-from app.agent.loop import UpstreamError, call_gemini
-from app.api.routes import (
-    ACTION_RESPONSE_SCHEMA,
-    ChatRequest,
-    ChatResponse,
-    _build_vision_request,
+from app.agent.auto_vision import (
+    VisionSubCallMissingPhotoError,
+    VisionSubCallUpstreamError,
+    parse_internal_vision_request,
+    run_auto_vision_followup,
+    run_text_only_followup,
 )
+from app.agent.loop import UpstreamError, call_gemini
+from app.api.routes import ACTION_RESPONSE_SCHEMA, ChatRequest
 from app.auth.dependency import UserIdentity, get_authenticated_user
 from app.conversations.history import format_history_block, trim_to_budget
 from app.conversations.store import (
@@ -65,7 +67,7 @@ async def chat_stream(
     )
 
 
-async def _stream_chat_events(
+async def _stream_chat_events(  # noqa: PLR0911, PLR0912
     body: ChatRequest,
     request: Request,
     user: UserIdentity,
@@ -173,9 +175,50 @@ async def _stream_chat_events(
         yield error_event("UPSTREAM_ERROR", _UPSTREAM_MSG)
         return
 
-    reply = str(result.get("reply", ""))
-    proposed_action = build_proposed_action(result, effective_plant_id, user.sub, settings)
-    vision_request = _build_vision_request(result, effective_plant_id)
+    # Inline auto-vision: if Flora decided she needs a photo, resolve and
+    # analyze it now (transparent to the user) and run a second Gemini call
+    # whose `reply` becomes the user-facing answer.
+    final_result = result
+    internal_vision_request = parse_internal_vision_request(result, effective_plant_id)
+    if internal_vision_request is not None:
+        yield status_event(
+            "analyzing_photo",
+            pick_status("analyzing_photo", include_humor=include_humor),
+        )
+        try:
+            final_result = await run_auto_vision_followup(
+                client=client,
+                vision_request=internal_vision_request,
+                effective_plant_id=effective_plant_id,
+                body_message=body.message,
+                base_context_str=context_str,
+                settings=settings,
+            )
+        except VisionSubCallMissingPhotoError:
+            # Photo unavailable — tell the agent to proceed without it.
+            try:
+                final_result = await run_text_only_followup(
+                    body_message=body.message,
+                    base_context_str=context_str,
+                    vision_request=internal_vision_request,
+                    settings=settings,
+                )
+            except VisionSubCallUpstreamError as exc:
+                _log_failed(start, user.sub, conv_id)
+                yield error_event("UPSTREAM_ERROR", exc.message or _UPSTREAM_MSG)
+                return
+        except VisionSubCallUpstreamError as exc:
+            # Hard upstream failure (Storage 5xx or vision Gemini 502).
+            _log_failed(start, user.sub, conv_id)
+            yield error_event("UPSTREAM_ERROR", exc.message or _UPSTREAM_MSG)
+            return
+
+    if not isinstance(final_result, dict):
+        yield error_event("UPSTREAM_ERROR", _UPSTREAM_MSG)
+        return
+
+    reply = str(final_result.get("reply", ""))
+    proposed_action = build_proposed_action(final_result, effective_plant_id, user.sub, settings)
 
     yield status_event(
         "writing_memory",
@@ -192,15 +235,15 @@ async def _stream_chat_events(
 
     _log_complete(start, user.sub, conv_id)
 
-    yield result_event(_build_response(conv_id, reply, proposed_action, vision_request))
+    yield result_event(_build_response(conv_id, reply, proposed_action))
 
 
-async def _single_shot_chat(
+async def _single_shot_chat(  # noqa: PLR0912
     body: ChatRequest,
     request: Request,
     user: UserIdentity,
     settings: "Settings",
-) -> ChatResponse:
+) -> dict:
     """Single-shot JSON response when dynamic states are disabled."""
     start = time.monotonic()
 
@@ -268,9 +311,39 @@ async def _single_shot_chat(
     if not isinstance(result, dict):
         raise UpstreamError(_UPSTREAM_MSG)
 
-    reply = str(result.get("reply", ""))
-    proposed_action = build_proposed_action(result, effective_plant_id, user.sub, settings)
-    vision_request = _build_vision_request(result, effective_plant_id)
+    # Inline auto-vision (same logic as the streaming path).
+    final_result = result
+    internal_vision_request = parse_internal_vision_request(result, effective_plant_id)
+    if internal_vision_request is not None:
+        try:
+            final_result = await run_auto_vision_followup(
+                client=client,
+                vision_request=internal_vision_request,
+                effective_plant_id=effective_plant_id,
+                body_message=body.message,
+                base_context_str=context_str,
+                settings=settings,
+            )
+        except VisionSubCallMissingPhotoError:
+            try:
+                final_result = await run_text_only_followup(
+                    body_message=body.message,
+                    base_context_str=context_str,
+                    vision_request=internal_vision_request,
+                    settings=settings,
+                )
+            except VisionSubCallUpstreamError as exc:
+                _log_failed(start, user.sub, conv_id)
+                raise UpstreamError(exc.message or _UPSTREAM_MSG) from exc
+        except VisionSubCallUpstreamError as exc:
+            _log_failed(start, user.sub, conv_id)
+            raise UpstreamError(exc.message or _UPSTREAM_MSG) from exc
+
+    if not isinstance(final_result, dict):
+        raise UpstreamError(_UPSTREAM_MSG)
+
+    reply = str(final_result.get("reply", ""))
+    proposed_action = build_proposed_action(final_result, effective_plant_id, user.sub, settings)
 
     await append_message(client, conv_id, "assistant", reply)
 
@@ -283,12 +356,11 @@ async def _single_shot_chat(
 
     _log_complete(start, user.sub, conv_id)
 
-    return ChatResponse(
-        conversation_id=conv_id,
-        reply=reply,
-        proposed_action=proposed_action,
-        vision_request=vision_request,
-    )
+    return {
+        "conversation_id": conv_id,
+        "reply": reply,
+        "proposed_action": proposed_action.model_dump() if proposed_action else None,
+    }
 
 
 def _log_failed(start: float, user_sub: str, conversation_id: str) -> None:
@@ -317,10 +389,9 @@ def _log_complete(start: float, user_sub: str, conversation_id: str) -> None:
     )
 
 
-def _build_response(conv_id: str, reply: str, proposed_action, vision_request) -> dict:
+def _build_response(conv_id: str, reply: str, proposed_action) -> dict:
     return {
         "conversation_id": conv_id,
         "reply": reply,
         "proposed_action": proposed_action.model_dump() if proposed_action else None,
-        "vision_request": vision_request.model_dump() if vision_request else None,
     }

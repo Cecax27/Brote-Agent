@@ -50,21 +50,13 @@ Main conversation endpoint. Sends a user message to the AI and returns its Spani
     "summary_es": "string (Spanish confirmation line for the app's card)",
     "payload": { "... (varies by action_type)" },
     "confirm_token": "string (HMAC-signed, single-use, 5-min TTL)"
-  } | null,
-  "vision_request": {
-    "reason_es": "string (Spanish question asking to see a photo)",
-    "suggested_ref": {
-      "kind": "journal_entry | plant_latest",
-      "journal_entry_id": "uuid (when kind=journal_entry)",
-      "plant_id": "uuid (when kind=plant_latest)"
-    }
   } | null
 }
 ```
 
 - `proposed_action`: present only when Flora detects actionable intent and the user's request matches the writable surface. The app should display the `summary_es` in a confirmation card and send the entire object unchanged to `/actions/execute` on confirm. The `confirm_token` is a server-signed, single-use token binding the exact payload to the authenticated user; altering any field invalidates it.
 - When `proposed_action` is `null` (most responses), there is nothing to confirm.
-- `vision_request`: present only when Flora decides seeing a photo would genuinely improve her answer. This is an **ask for authorization**, not an analysis — no image bytes have been sent to the AI on this `/chat` turn. The app should display `reason_es` with a confirm affordance; on user authorization, the app calls `/vision/analyze-stored` with the `suggested_ref` from this object. When `null`, Flora doesn't need a photo.
+- **Vision analysis is now automatic.** If Flora decides that seeing a photo would help, the server transparently resolves the referenced photo, runs the vision analysis, and uses the result to compose `reply`. No client action is required; the app never receives a `vision_request` field.
 
 ### Writable surface (V1.0)
 
@@ -151,7 +143,7 @@ A conversation is optionally linked to a single `plant_id`:
 
 ### Persistence model
 
-Every `/chat` turn writes two `ai_messages` rows (user + assistant) through the user-scoped Supabase client with RLS ownership. The user message is persisted **before** the Gemini call so it survives a 502 failure. On Gemini success the assistant reply is persisted and `ai_conversations.updated_at` is bumped. `proposed_action` payloads and `vision_request` asks are **not** persisted as history text — they are per-turn, ephemeral extras. The `ai_messages.content` column has a database `CHECK (char_length BETWEEN 1 AND 4000)`; assistant replies are defensively truncated to 4000 chars before insert.
+Every `/chat` turn writes two `ai_messages` rows (user + assistant) through the user-scoped Supabase client with RLS ownership. The user message is persisted **before** the Gemini call so it survives a 502 failure. On Gemini success the assistant reply is persisted and `ai_conversations.updated_at` is bumped. `proposed_action` payloads are **not** persisted as history text — they are per-turn, ephemeral extras. The `ai_messages.content` column has a database `CHECK (char_length BETWEEN 1 AND 4000)`; assistant replies are defensively truncated to 4000 chars before insert.
 
 ---
 
@@ -270,7 +262,9 @@ Every Supabase read runs as the authenticated user via their access token. Row L
 
 ### Image analysis gating rule
 
-**Images are never sent to the AI model on `/chat` calls.** The `/chat` response may contain an optional `vision_request` (an *ask for authorization*, not an analysis). Vision analysis only happens on an explicit call to one of the `/vision/*` endpoints. This rule prevents silent credit consumption: every image that reaches the AI has been explicitly authorized by the user.
+**Vision analysis is automatic and transparent inside `/chat` and `/chat/stream`.** When Flora decides a photo would help her answer, the server resolves the referenced photo, runs the vision model on it, and uses the diagnosis to compose the final `reply`. The app sees an `analyzing_photo` status event during this step but no separate `/vision/*` call is required.
+
+Direct calls to `/vision/analyze-stored` and `/vision/analyze-upload` are still available for callers that want a standalone photo analysis (e.g., an explicit "send a photo" button in the UI), but the chat endpoints handle vision transparently and no longer require user authorization for the agent's per-turn image inspection.
 
 ---
 
