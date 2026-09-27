@@ -29,9 +29,9 @@ Things only you can do (Supabase project, storage bucket config, model selection
 
 ## Gemini vision model (gates Phase 0 + 3 + 10)
 
-- [ ] Select the actual `gemini_vision_model` the agent should call (the default placeholder is `gemini-2.0-flash`). Confirm it:
-  - accepts a multimodal request (image `Part` + text) with `response_schema` (structured output); if not, confirm the fallback (a constrained JSON-only follow-up per `plan.md` Risk) is acceptable.
-  - is billable within the project's Gemini plan for the expected call volume.
+- [x] Select the actual `gemini_vision_model` the agent should call — **`gemini-3.8-flash`** (Google retired `gemini-2.0-flash`; `gemini-3.8-flash` is the recommended multimodal replacement). Confirm it:
+  - [x] accepts a multimodal request (image `Part` + text) with `response_schema` (structured output); verified live against the project key. If not, confirm the fallback (a constrained JSON-only follow-up per `plan.md` Risk) is acceptable.
+  - [ ] is billable within the project's Gemini plan for the expected call volume.
 - [ ] Confirm pricing-per-vision-call is acceptable given that **every** vision call is gated behind an explicit `/vision/*` request (no auto-injection). Provide a rough cost ceiling you can live with so `vision_max_image_bytes` / `vision_max_dimension` can be tuned in `tasks.md` Phase 0.
 
 ## Image caps & formats (gates Phase 0 + 1 + 10)

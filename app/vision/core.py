@@ -5,6 +5,7 @@ import json
 from google import genai
 from google.genai import types
 
+from app.agent.loop import UpstreamError
 from app.agent.prompts import SYSTEM_PROMPT, VISION_SUB_PROMPT
 from app.config.settings import Settings  # noqa: TC001
 from app.logging import get_logger
@@ -13,10 +14,6 @@ from app.vision.models import VISION_RESPONSE_SCHEMA
 logger = get_logger(__name__)
 
 UPSTREAM_ERROR_MESSAGE = "El servicio de IA no respondió. Inténtalo de nuevo en un momento."
-
-
-class UpstreamError(Exception):
-    pass
 
 
 def _build_vision_system_prompt() -> str:

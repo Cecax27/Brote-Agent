@@ -188,7 +188,7 @@ class TestVisionSSE:
         mock_vision_images,
         auth_headers: dict,
     ) -> None:
-        from app.vision.core import UpstreamError
+        from app.agent.loop import UpstreamError
 
         mock_vision_auth.return_value = {"id": "test-user-id"}
         mock_vision_gemini.side_effect = UpstreamError("fallo")
@@ -207,3 +207,28 @@ class TestVisionSSE:
         error_events = [e for e in events if e["event"] == "error"]
         assert len(error_events) == 1
         assert error_events[0]["data"]["error"]["code"] == "UPSTREAM_ERROR"
+
+    @pytest.mark.asyncio
+    async def test_analyze_upload_upstream_failure_returns_502(
+        self,
+        client: AsyncClient,
+        mock_vision_gemini: AsyncMock,
+        mock_vision_auth: AsyncMock,
+        mock_vision_audit,
+        mock_vision_images,
+        auth_headers: dict,
+    ) -> None:
+        from app.agent.loop import UpstreamError
+
+        mock_vision_auth.return_value = {"id": "test-user-id"}
+        mock_vision_gemini.side_effect = UpstreamError("El servicio de IA no respondió.")
+
+        response = await client.post(
+            "/vision/analyze-upload",
+            data={"message": "¿Qué ves?"},
+            files={"image": ("test.jpg", b"fake-image-bytes", "image/jpeg")},
+            headers=auth_headers,
+        )
+
+        assert response.status_code == 502
+        assert response.json()["error"]["code"] == "UPSTREAM_ERROR"

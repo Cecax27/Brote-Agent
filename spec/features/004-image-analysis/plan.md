@@ -156,7 +156,7 @@ Settings added to `app/config/settings.py`:
 
 ```python
 gemini_vision_model: str = (
-    "gemini-2.0-flash"  # vision-capable model; team confirms (see users-tasks.md)
+    "gemini-3.8-flash"  # vision-capable model; confirmed (see users-tasks.md)
 )
 gemini_vision_temperature: float = 0.4  # lower than text; calm, not hallucinatory
 vision_max_image_bytes: int = 8_000_000  # raw upload/download cap before resize (~8 MiB)
@@ -182,7 +182,7 @@ Recommended defaults, all confirmable before code touches:
 - **`httpx` declared as a runtime dep.** FastAPI/Starlette pull httpx transitively for the test client, and supabase-py uses httpx; we declare it explicitly because the agent now depends on it directly for the Storage GET. Confirm.
 - **MIME allowlist of `{jpeg, png, webp}`.** The three MIMEs the mobile app's picker will produce. Bytes are decoded with Pillow (source of truth) rather than trusting `content_type`. **Rejected:** trusting declared `content_type` alone (`image/jpeg` headers on a `.exe` body). Confirm.
 - **`400 INVALID_IMAGE` for validator rejects; `404 IMAGE_NOT_FOUND` for RLS-denied/absent stored refs; `502 UPSTREAM_ERROR` for Gemini and Storage-download failures (reuse).** Distinct failure classes: the request body's image is unprocessable (`400`), the ref points at nothing the user owns (`404`, consistent with 002's "RLS turns 'not yours' into 'doesn't exist'"), upstream AI/Storage is down (`502`). No `403` (matches 002 reasoning). Confirm.
-- **`gemini_vision_model` separate from `gemini_model`.** Vision-capable models and text-cheap models differ; decoupling lets the team upgrade one without the other. Default `gemini-2.0-flash` is a placeholder; **the team confirms the actual vision-capable model** in `users-tasks.md`. Confirm the split is right.
+- **`gemini_vision_model` separate from `gemini_model`.** Vision-capable models and text-cheap models differ; decoupling lets the team upgrade one without the other. Default is `gemini-3.8-flash`, selected after Google retired the original `gemini-2.0-flash` placeholder (see `users-tasks.md`). Confirm the split is right.
 - **Lower vision temperature (0.4).** Diagnosis benefits from less sampliness than chit-chat; 0.4 keeps Flora's calm voice without inventing symptoms. Confirm or set differently.
 - **Calibration via `needs_more_info`, not via a hard pre-question step.** When the photo + context are insufficient, Flora returns `confidence="baja"` plus a clarifying `question_es` and waits, instead of forcing a multi-turn "answer my three questions before I look" flow. Matches `mission.md`'s honesty rule and keeps vision single-shot. **Rejected:** a mandatory calibration sub-flow before every vision call — it would make V1.0 feel like a form, against the relaxing-UX principle. Confirm.
 - **Off-topic non-plant images: decline, don't classify.** Flora declines politely in Spanish and steers back to plants; she does not produce a "this is a cat" classification. The vision sub-prompt enforces scope. **Open question (confirm):** is `vision.kind="mixed"` with a declining `reply` enough, or should we add an explicit `kind="declined"` value to make the contract unambiguous? Recommendation: add `kind="declined"` for clarity.
